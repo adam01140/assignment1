@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ALCO Timesheet Portal</title>
+<style>
+  /* Basic resets */
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ddecf5; 
+    font-family: Arial, sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+  }
+  header, footer {
+    background: #fff;
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+  }
+  footer {
+    border-top: 1px solid #ccc;
+    border-bottom: none;
+    margin-top: auto;
+  }
+
+  .page-content {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    width: 100%; 
+  }
+  .container {
+    width: 95%;
+    max-width: 1200px;
+    background: #fff;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 8px; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  /* Headings */
+  h1, h2, h3, h4 {
+    margin-top: 0;
+    color: #333;
+  }
+
+  /* Basic button style */
+  button {
+    background: #4da6ff;
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  button:hover {
+    background: #3399ff;
+  }
+
+  /* "View"/"Approve"/"Delete" etc. in a row */
+  .inline-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 0.6rem; 
+    margin-bottom: 0.6rem;
+  }
+
+  /* The 4 main user timesheet-creation buttons in a vertical stack, centered */
+  .vertical-button-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  /* Link styles */
+  .link {
+    color: #3399ff;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 1rem;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  /* Table Wrappers: allow horizontal scroll if needed */
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto; 
+  }
+
+  /* Table styling (blue header row) */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 1rem;
+    background-color: #fff;
+  }
+  thead tr {
+    background-color: #4299e1;  
+    color: #fff;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 0.75rem;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    white-space: nowrap; 
+  }
+  th {
+    font-weight: 600;
+  }
+
+  .admin-button {
+    display: block;
+    margin-top: 1rem;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* Timesheet item styling */
+  .timesheet-item {
+    background: #f9fcff; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  .timesheet-item-header {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  .timesheet-details {
+    margin: 1rem 0;
+  }
+  .timesheet-details.hidden {
+    display: none;
+  }
+
+  /* Center logout + gear side by side */
+  .logout-btn-container {
+    text-align: center;
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  /* Timesheet creation container */
+  .timesheet-entry-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fff;
+    width: 100%;
+  }
+
+  /* Auth forms */
+  .auth-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  .auth-form-container input {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  /* Extra spacing above the Create button */
+  #create-new-timesheet-container {
+    margin-top: 1.5rem;
+  }
+
+  /* “Pay Period Start Date” label bigger */
+  .start-date-container {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem; 
+    font-size: 1.2rem;
+  }
+  .start-date-container label {
+    font-weight: 600; 
+  }
+
+  /* Bolder employee name in admin table */
+  #admin-users-table tbody td:first-child {
+    font-weight: bold; 
+  }
+
+  /* Approved Timesheets */
+  #admin-approved-wrapper {
+    margin-top: 2rem; 
+  }
+
+  /* Make "None"/"NaN" invisible if needed */
+  .invisible-value {
+    color: transparent;       
+    display: inline-block;
+    width: 100%;
+    min-height: 1em;          
+    white-space: pre;         
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 700px) {
+    table td {
+      padding: 0.5rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .container {
+      margin: 1rem 0.5rem;
+      padding: 1rem;
+      max-width: 100%;
+    }
+    body {
+      font-size: 0.95rem;
+    }
+    th, td {
+      font-size: 0.85rem;
+      padding: 0.5rem;
+    }
+  }
+  @media (max-width: 700px) {
+    table thead {
+      display: none;
+    }
+    table, table tbody, table tr, table td {
+      display: block;
+      width: 100%;
+    }
+    table tr {
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ccc;
+    }
+    table td {
+      position: relative;
+      padding-left: 40%;
+      text-align: left;
+      border: none;
+      border-bottom: 1px solid #eee;
+    }
+    table td:before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      width: 35%;
+      font-weight: bold;
+      text-align: left;
+    }
+    .spacer-row td {
+      border: none;
+      background: none;
+      height: 8px;
+    }
+  }
+
+  /* EASY FILL SETTINGS container */
+  #easyfill-settings-container {
+    display: none; 
+  }
+  #easyfill-settings-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+  }
+  #easyfill-settings-table th, #easyfill-settings-table td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .easyfill-time-cell {
+    min-width: 80px;
+  }
+
+  /* Slightly narrower "Job" dropdown and "Comment" fields in creation table */
+  #timesheet-entry-container select[name="jobDescription"],
+  #timesheet-entry-container input[name="comment"] {
+    max-width: 120px; /* Adjust as needed */
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>ALCO Timesheet Portal</h1>
+</header>
+
+<div class="page-content">
+
+  <!-- AUTH container -->
+  <div class="container" id="auth-container">
+    <!-- User Login -->
+    <div id="user-auth-section">
+      <h2 style="text-align:center;">User Login</h2>
+      <div class="auth-form-container">
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button id="login-btn">Login</button>
+      </div>
+      <div style="text-align:center;">
+        <span class="link" id="go-to-signup">Don't have an account? Sign Up</span>
+      </div>
+    </div>
+
+    <!-- User Sign Up -->
+    <div id="user-signup-section" class="hidden">
+      <h2 style="text-align:center;">User Sign Up</h2>
+      <div class="auth-form-container">
+        <input type="text" id="signup-firstname" placeholder="First Name">
+        <input type="text" id="signup-lastname" placeholder="Last Name">
+        <input type="email" id="signup-email" placeholder="Email">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button id="signup-btn">Sign Up</button>
+      </div>
+      <div style="text-align:center;">
+        <span class="link" id="go-to-login">Already have an account? Login</span>
+      </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="admin-login-section" class="hidden">
+      <h2 style="text-align:center;">Admin Login</h2>
+      <div class="auth-form-container">
+        <input type="password" id="admin-password" placeholder="Admin Password">
+        <button id="admin-login-btn">Login as Admin</button>
+      </div>
+      <div style="text-align:center;">
+        <span class="link" id="go-to-user-login">Go to User Login</span>
+      </div>
+    </div>
+
+    <span class="admin-button" id="admin-access-link">Admin Login</span>
+  </div>
+  
+  <!-- USER DASHBOARD -->
+  <div class="container hidden" id="user-dashboard">
+    <h2 style="text-align:center;">Welcome, <span id="user-name-display"></span></h2>
+
+    <h3>New Timesheets</h3>
+    <div class="timesheet-item" id="create-new-timesheet-container">
+      <button id="create-new-timesheet-btn">Create New Timesheet</button>
+    </div>
+
+    <div id="timesheet-start-section" class="hidden" style="text-align:center;">
+      <div class="start-date-container">
+        <label for="timesheet-start">Pay Period Start Date:</label>
+        <input type="date" id="timesheet-start" placeholder="mm/dd/yyyy" />
+      </div>
+    </div>
+
+    <div class="timesheet-entry-container hidden" id="timesheet-entry-container">
+      <div class="table-wrapper">
+        <div id="timesheet-form"></div>
+      </div>
+      <div class="vertical-button-stack">
+        <button id="easy-fill-btn">Easy Fill</button>
+        <button id="export-timesheet-btn">Export PDF</button>
+        <button id="submit-timesheet-btn">Submit Timesheet</button>
+        <button id="cancel-timesheet-btn">Cancel</button>
+      </div>
+    </div>
+
+    <br>
+    <h3>Past Timesheets</h3>
+    <div id="past-timesheets"></div>
+
+    <div class="logout-btn-container">
+      <button id="gear-button">⚙</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </div>
+
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="container hidden" id="admin-dashboard">
+    <h2 style="text-align:center;">Admin Dashboard</h2>
+    
+    <h3>Timesheets Pending Approval</h3>
+    <div class="container hidden" id="admin-pending-view-container"></div>
+
+    <div class="table-wrapper" id="admin-users-wrapper">
+      <!-- Pending table inserted dynamically -->
+    </div>
+
+    <br><br><br>
+    <h3>Approved Timesheets</h3>
+    <div class="table-wrapper" id="admin-approved-wrapper">
+      <!-- Approved table inserted dynamically -->
+    </div>
+    <div class="container hidden" id="admin-approved-view-container"></div>
+
+    <div class="logout-btn-container">
+      <button id="admin-logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <!-- EASY FILL SETTINGS PAGE (only for user) -->
+  <div class="container" id="easyfill-settings-container">
+    <h2 style="text-align:center;">Easy Fill Settings</h2>
+    <p style="text-align:center;">
+      Below are your default start/end times, job, and comment for each day.
+      When you click <strong>Easy Fill</strong> on a new timesheet, 
+      these will be automatically inserted.
+    </p>
+    <div class="table-wrapper">
+      <table id="easyfill-settings-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Start 1</th>
+            <th>End 1</th>
+            <th>Start 2</th>
+            <th>End 2</th>
+            <th>Job</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody id="easyfill-settings-tbody">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    <div class="inline-button-group" style="margin-top:1rem;">
+      <button id="easyfill-edit-btn">Edit</button>
+      <button id="easyfill-back-btn">Back</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>&copy; 2024 ALCO Timesheet</p>
+</footer>
+
+<script type="module">
+/********************************************************
+ * Pay period logic with a year-based reset. This ensures
+ * that each new year's Jan 6, Jan 20, etc. remain consistent.
+ * So if today is 1/21/2025, we get 1/20/2025.
+ ********************************************************/
+function getPayPeriodStartForToday() {
+  const now = new Date();
+  let year = now.getFullYear();
+  // Base for this year's Jan 6 in UTC
+  let baseUTC = Date.UTC(year, 0, 6); 
+  
+  const todayUTC = Date.UTC(
+    now.getUTCFullYear(), 
+    now.getUTCMonth(), 
+    now.getUTCDate()
+  );
+  
+  // If "today" is before this year's Jan 6, back up to last year's
+  if (todayUTC < baseUTC) {
+    year--;
+    baseUTC = Date.UTC(year, 0, 6);
+  }
+  
+  let currentStart = baseUTC;
+  while (true) {
+    const nextPeriod = currentStart + (14 * 24 * 60 * 60 * 1000);
+    if (nextPeriod <= todayUTC) {
+      currentStart = nextPeriod;
+    } else {
+      break;
+    }
+  }
+  return new Date(currentStart);
+}
+
+/** If "None"/"NaN", color them invisible (white). */
+function styleNone(val) {
+  if(!val || val==="None" || val==="NaN"){
+    return ' style="color:#f9fcff;"';
+  }
+  return '';
+}
+
+/** Convert "HH:MM" => "hh:mm AM/PM" for display */
+function formatTime24ToAmPm(ts) {
+  if(!ts) return "";
+  const [hStr,mStr] = ts.split(':');
+  let hh = parseInt(hStr,10);
+  const mm = parseInt(mStr,10);
+  if(isNaN(hh)||isNaN(mm)) return "";
+  let ampm="AM";
+  if(hh>=12) ampm="PM";
+  if(hh>12) hh-=12;
+  if(hh===0) hh=12;
+  return hh.toString().padStart(2,'0') + ":" + mm.toString().padStart(2,'0')+" "+ampm;
+}
+
+/** Convert "hh:mm AM/PM" => "HH:MM" */
+function parseAmPmTo24Hr(st) {
+  if(!st || !/^\d{1,2}:\d{2}\s?(AM|PM)$/i.test(st.trim())){
+    return "";
+  }
+  const parts=st.trim().split(/\s+/);
+  const [hhStr,mmStr]= parts[0].split(':');
+  let hour=parseInt(hhStr,10);
+  const minute=parseInt(mmStr,10);
+  const ampm=parts[1].toUpperCase();
+  if(ampm==="PM"&&hour<12) hour+=12;
+  if(ampm==="AM"&&hour===12) hour=0;
+  return hour.toString().padStart(2,'0')+":"+minute.toString().padStart(2,'0');
+}
+
+/** parseLocalDate("YYYY-MM-DD") => Date */
+function parseLocalDate(str) {
+  const [y,m,d]= str.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+/** compute hours from "HH:MM" start/end */
+function calculateHours(st,et){
+  if(!st||st==="None"||!et||et==="None") return 0;
+  const [sh,sm]= st.split(':').map(Number);
+  const [eh,em]= et.split(':').map(Number);
+  const sTot= sh*60+sm;
+  const eTot= eh*60+em;
+  if(eTot<= sTot) return 0;
+  return (eTot- sTot)/60;
+}
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  collection,
+  addDoc,
+  query,
+  where,
+  serverTimestamp,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSidlO3C_GXOa7Iw1MFyVI35MzrQEJqyk",
+  authDomain: "alcotimesheet-7df9a.firebaseapp.com",
+  projectId: "alcotimesheet-7df9a",
+  storageBucket: "alcotimesheet-7df9a.appspot.com",
+  messagingSenderId: "898498713259",
+  appId: "1:898498713259:web:6e7b578697d44c89f009ee",
+  measurementId: "G-97VCE2E8Z2"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+// DOM references
+const userAuthSection   = document.getElementById('user-auth-section');
+const userSignupSection = document.getElementById('user-signup-section');
+const adminLoginSection = document.getElementById('admin-login-section');
+const authContainer     = document.getElementById('auth-container');
+const userDashboard     = document.getElementById('user-dashboard');
+const adminDashboard    = document.getElementById('admin-dashboard');
+
+const loginEmailInput   = document.getElementById('login-email');
+const loginPasswordInput= document.getElementById('login-password');
+const loginBtn          = document.getElementById('login-btn');
+
+const signupFirstNameInput= document.getElementById('signup-firstname');
+const signupLastNameInput = document.getElementById('signup-lastname');
+const signupEmailInput    = document.getElementById('signup-email');
+const signupPasswordInput = document.getElementById('signup-password');
+const signupBtn           = document.getElementById('signup-btn');
+
+const adminPasswordInput  = document.getElementById('admin-password');
+const adminLoginBtn       = document.getElementById('admin-login-btn');
+const adminAccessLink     = document.getElementById('admin-access-link');
+
+const goToSignupLink    = document.getElementById('go-to-signup');
+const goToLoginLink     = document.getElementById('go-to-login');
+const goToUserLoginLink = document.getElementById('go-to-user-login');
+
+const logoutBtn        = document.getElementById('logout-btn');
+const adminLogoutBtn   = document.getElementById('admin-logout-btn');
+const gearButton       = document.getElementById('gear-button');
+
+const userNameDisplay  = document.getElementById('user-name-display');
+const timesheetStartInput= document.getElementById('timesheet-start');
+const timesheetFormDiv = document.getElementById('timesheet-form');
+const easyFillBtn      = document.getElementById('easy-fill-btn');
+const exportTimesheetBtn= document.getElementById('export-timesheet-btn');
+const submitTimesheetBtn= document.getElementById('submit-timesheet-btn');
+const cancelTimesheetBtn= document.getElementById('cancel-timesheet-btn');
+
+const createNewTimesheetBtn= document.getElementById('create-new-timesheet-btn');
+const createNewTimesheetContainer= document.getElementById('create-new-timesheet-container');
+const timesheetStartSection= document.getElementById('timesheet-start-section');
+const timesheetEntryContainer= document.getElementById('timesheet-entry-container');
+const pastTimesheetsDiv= document.getElementById('past-timesheets');
+
+const adminUsersWrapper       = document.getElementById('admin-users-wrapper');
+const adminApprovedWrapper    = document.getElementById('admin-approved-wrapper');
+const adminPendingViewContainer= document.getElementById('admin-pending-view-container');
+const adminApprovedViewContainer= document.getElementById('admin-approved-view-container');
+
+const easyfillSettingsContainer= document.getElementById('easyfill-settings-container');
+const easyfillSettingsTbody    = document.getElementById('easyfill-settings-tbody');
+const easyfillEditBtn          = document.getElementById('easyfill-edit-btn');
+const easyfillBackBtn          = document.getElementById('easyfill-back-btn');
+
+let currentUser=null;
+let isAdmin=false;
+let currentUserName="";
+let userEasyFillSettings={};
+
+const adminEmail="admin@mydomain.com";
+const adminRealPassword="alco1234";
+
+/*************************
+ * Page Navigation / UI
+ *************************/
+function showUserLogin(){
+  userAuthSection.classList.remove('hidden');
+  userSignupSection.classList.add('hidden');
+  adminLoginSection.classList.add('hidden');
+  userDashboard.classList.add('hidden');
+  adminDashboard.classList.add('hidden');
+}
+function showUserSignup(){
+  userAuthSection.classList.add('hidden');
+  userSignupSection.classList.remove('hidden');
+  adminLoginSection.classList.add('hidden');
+}
+function showAdminLogin(){
+  userAuthSection.classList.add('hidden');
+  userSignupSection.classList.add('hidden');
+  adminLoginSection.classList.remove('hidden');
+}
+function showUserDashboard(){
+  authContainer.classList.add('hidden');
+  userDashboard.classList.remove('hidden');
+  adminDashboard.classList.add('hidden');
+  easyfillSettingsContainer.style.display='none'; 
+}
+function showAdminDashboard(){
+  authContainer.classList.add('hidden');
+  userDashboard.classList.add('hidden');
+  adminDashboard.classList.remove('hidden');
+}
+
+/*************************
+ * Auth
+ *************************/
+loginBtn.addEventListener('click', async()=>{
+  const email=loginEmailInput.value.trim();
+  const pass =loginPasswordInput.value.trim();
+  if(!email||!pass){
+    return alert("Please fill out all fields");
+  }
+  try{
+    const cred=await signInWithEmailAndPassword(auth,email,pass);
+    currentUser=cred.user;
+    isAdmin=false;
+    await fetchUserName();
+    await loadUserEasyFillSettings();
+    loadUserTimesheets();
+    showUserDashboard();
+  }catch(e){
+    alert(e.message);
+  }
+});
+
+signupBtn.addEventListener('click', async()=>{
+  const fname=signupFirstNameInput.value.trim();
+  const lname=signupLastNameInput.value.trim();
+  const em=signupEmailInput.value.trim();
+  const pw=signupPasswordInput.value.trim();
+  if(!fname||!lname||!em||!pw){
+    return alert("Please fill out all fields");
+  }
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,em,pw);
+    const uid=cred.user.uid;
+    await setDoc(doc(db,'users',uid),{
+      firstName:fname,
+      lastName:lname,
+      email:em,
+      createdAt:serverTimestamp()
+    });
+    currentUser=cred.user;
+    currentUserName=`${fname} ${lname}`;
+    isAdmin=false;
+
+    const defaultSettings={
+      Sunday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Monday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Tuesday:   {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Wednesday: {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Thursday:  {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Friday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Saturday:  {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""}
+    };
+    await setDoc(doc(db,'easyfillsettings',uid),defaultSettings);
+
+    await loadUserEasyFillSettings();
+    loadUserTimesheets();
+    showUserDashboard();
+  }catch(e){
+    alert(e.message);
+  }
+});
+
+adminLoginBtn.addEventListener('click', async()=>{
+  const typed=adminPasswordInput.value.trim();
+  if(!typed) return alert("Please enter admin password");
+  if(typed===adminRealPassword){
+    try{
+      const cred=await signInWithEmailAndPassword(auth,adminEmail,adminRealPassword);
+      currentUser=cred.user;
+      isAdmin=true;
+      showAdminDashboard();
+      loadAdminData();
+    }catch(e){
+      alert(e.message);
+    }
+  }else{
+    alert("Incorrect admin password");
+  }
+});
+
+goToSignupLink.addEventListener('click',showUserSignup);
+goToLoginLink.addEventListener('click',showUserLogin);
+goToUserLoginLink.addEventListener('click',showUserLogin);
+adminAccessLink.addEventListener('click',showAdminLogin);
+
+logoutBtn.addEventListener('click', async()=>{
+  await signOut(auth);
+  currentUser=null;
+  currentUserName="";
+  isAdmin=false;
+  showUserLogin();
+  location.reload();
+});
+adminLogoutBtn.addEventListener('click', async()=>{
+  await signOut(auth);
+  currentUser=null;
+  currentUserName="";
+  isAdmin=false;
+  showUserLogin();
+});
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){
+    showUserLogin();
+    return;
+  }
+  if(user.email===adminEmail){
+    isAdmin=true;
+    showAdminDashboard();
+    loadAdminData();
+  }else{
+    isAdmin=false;
+    currentUser=user;
+    await fetchUserName();
+    await loadUserEasyFillSettings();
+    userNameDisplay.textContent=currentUserName;
+    showUserDashboard();
+    loadUserTimesheets();
+  }
+});
+
+/*************************
+ * fetchUserName
+ *************************/
+async function fetchUserName(){
+  if(!currentUser) return;
+  const snap=await getDoc(doc(db,'users',currentUser.uid));
+  if(snap.exists()){
+    const d=snap.data();
+    currentUserName=`${d.firstName} ${d.lastName}`;
+    userNameDisplay.textContent=currentUserName;
+  }
+}
+
+/*************************
+ * loadUserEasyFillSettings
+ *************************/
+async function loadUserEasyFillSettings(){
+  if(!currentUser) return;
+  const ref=doc(db,'easyfillsettings',currentUser.uid);
+  const snap=await getDoc(ref);
+  if(snap.exists()){
+    userEasyFillSettings=snap.data();
+  } else {
+    userEasyFillSettings={
+      Sunday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Monday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Tuesday:   {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Wednesday: {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Thursday:  {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Friday:    {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""},
+      Saturday:  {start1:"09:00", end1:"12:00", start2:"13:00", end2:"17:00", job:"", comment:""}
+    };
+    await setDoc(ref,userEasyFillSettings);
+  }
+}
+
+/*************************
+ * Timesheet creation
+ *************************/
+createNewTimesheetBtn.addEventListener('click', ()=>{
+  const payStart= getPayPeriodStartForToday();
+  const isoDate= payStart.toISOString().split('T')[0];
+  timesheetStartInput.value= isoDate;
+
+  createNewTimesheetContainer.classList.add('hidden');
+  timesheetStartSection.classList.remove('hidden');
+  timesheetEntryContainer.classList.remove('hidden');
+  renderTimesheetForm();
+});
+
+timesheetStartInput.addEventListener('change', ()=>{
+  if(!timesheetStartInput.value) return;
+  timesheetEntryContainer.classList.remove('hidden');
+  renderTimesheetForm();
+});
+
+/** Easy Fill => fill times from user settings */
+easyFillBtn.addEventListener('click', ()=>{
+  const rows= timesheetFormDiv.querySelectorAll('.timesheet-row');
+  rows.forEach(r=>{
+    const dt=r.getAttribute('data-date');
+    const dObj=new Date(dt+"T12:00:00");
+    const dayIdx=dObj.getDay();
+    const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const dName=dayNames[dayIdx];
+
+    const st1=r.querySelector('input[name="startTime1"]');
+    const et1=r.querySelector('input[name="endTime1"]');
+    const st2=r.querySelector('input[name="startTime2"]');
+    const et2=r.querySelector('input[name="endTime2"]');
+    const job=r.querySelector('select[name="jobDescription"]');
+    const cmt=r.querySelector('input[name="comment"]');
+
+    const ds=userEasyFillSettings[dName]||{};
+    st1.value=ds.start1||"";
+    et1.value=ds.end1||"";
+    st2.value=ds.start2||"";
+    et2.value=ds.end2||"";
+    job.value=ds.job||"";
+    cmt.value=ds.comment||"";
+  });
+});
+
+/** Export PDF in same layout as admin, with Great Vibes font loading. */
+exportTimesheetBtn.addEventListener('click',()=>{
+  const sv= timesheetStartInput.value||"";
+  if(!sv){
+    alert("Please choose a start date first.");
+    return;
+  }
+  const sObj= parseLocalDate(sv);
+  const eObj= new Date(sObj);
+  eObj.setDate(eObj.getDate()+13);
+  const eY= eObj.getFullYear();
+  const eM= String(eObj.getMonth()+1).padStart(2,'0');
+  const eD= String(eObj.getDate()).padStart(2,'0');
+  const endIso=`${eY}-${eM}-${eD}`;
+
+  let entries=[];
+  const rows= timesheetFormDiv.querySelectorAll('.timesheet-row');
+  rows.forEach(r=>{
+    const dt= r.getAttribute('data-date');
+    const st1=r.querySelector('input[name="startTime1"]').value.trim()||"None";
+    const et1=r.querySelector('input[name="endTime1"]').value.trim()||"None";
+    const st2=r.querySelector('input[name="startTime2"]').value.trim()||"None";
+    const et2=r.querySelector('input[name="endTime2"]').value.trim()||"None";
+    const jv=r.querySelector('select[name="jobDescription"]').value.trim()||"None";
+    const cVal=r.querySelector('input[name="comment"]').value.trim()||"None";
+
+    const hrs= calculateHours(st1,et1)+ calculateHours(st2, et2);
+    entries.push({
+      date: dt,
+      startTime1: st1,
+      endTime1: et1,
+      startTime2: st2,
+      endTime2: et2,
+      jobDescription:jv,
+      comment:cVal,
+      totalHours: hrs
+    });
+  });
+
+  printOrExportTimesheet({
+    userName: currentUserName,
+    startDate: sv,
+    endDate: endIso,
+    entries
+  });
+});
+
+/** Submit Timesheet */
+submitTimesheetBtn.addEventListener('click', async()=>{
+  if(!currentUser) return;
+  const sv= timesheetStartInput.value;
+  if(!sv) return;
+
+  const confirmMsg="By submitting this timesheet, you certify that you have received your mandated 30 minute lunch break along with two separate 10 minute breaks?";
+  if(!confirm(confirmMsg)) return;
+
+  const sObj=parseLocalDate(sv);
+  const eObj=new Date(sObj);
+  eObj.setDate(eObj.getDate()+13);
+  const eY=eObj.getFullYear();
+  const eM=String(eObj.getMonth()+1).padStart(2,'0');
+  const eD=String(eObj.getDate()).padStart(2,'0');
+  const endIso=`${eY}-${eM}-${eD}`;
+
+  let entries=[];
+  const rows= timesheetFormDiv.querySelectorAll('.timesheet-row');
+  rows.forEach(r=>{
+    const dt=r.getAttribute('data-date');
+    const st1=r.querySelector('input[name="startTime1"]').value.trim()||"None";
+    const et1=r.querySelector('input[name="endTime1"]').value.trim()||"None";
+    const st2=r.querySelector('input[name="startTime2"]').value.trim()||"None";
+    const et2=r.querySelector('input[name="endTime2"]').value.trim()||"None";
+    const jb=r.querySelector('select[name="jobDescription"]').value.trim()||"None";
+    const cm=r.querySelector('input[name="comment"]').value.trim()||"None";
+    const hrs= calculateHours(st1,et1)+calculateHours(st2,et2);
+    entries.push({
+      date: dt,
+      startTime1: st1,
+      endTime1:   et1,
+      startTime2: st2,
+      endTime2:   et2,
+      jobDescription: jb,
+      comment: cm,
+      totalHours: hrs
+    });
+  });
+
+  await addDoc(collection(db,'timesheets'),{
+    userId: currentUser.uid,
+    userName: currentUserName,
+    startDate: sv,
+    endDate: endIso,
+    entries,
+    submittedAt: serverTimestamp(),
+    approved:false,
+    unsubmitted:false,
+    adminDeleted:false,
+    userDeleted:false
+  });
+
+  timesheetStartInput.value="";
+  timesheetFormDiv.innerHTML="";
+  timesheetEntryContainer.classList.add('hidden');
+  timesheetStartSection.classList.add('hidden');
+  createNewTimesheetContainer.classList.remove('hidden');
+  loadUserTimesheets();
+});
+
+/** Cancel creation */
+cancelTimesheetBtn.addEventListener('click',()=>{
+  timesheetStartInput.value="";
+  timesheetFormDiv.innerHTML="";
+  timesheetEntryContainer.classList.add('hidden');
+  timesheetStartSection.classList.add('hidden');
+  createNewTimesheetContainer.classList.remove('hidden');
+});
+
+/** Render a 2-week table from selected start date */
+function renderTimesheetForm(){
+  timesheetFormDiv.innerHTML="";
+  const sv= timesheetStartInput.value;
+  if(!sv) return;
+
+  const start= parseLocalDate(sv);
+  const daysCount=14;
+  const table= document.createElement('table');
+  table.style.tableLayout='fixed'; // narrower columns
+
+  const thead=document.createElement('thead');
+  const thr=document.createElement('tr');
+  ["Date","Start Time","End Time","Start Time","End Time","Job","Comment"]
+    .forEach(txt=>{
+      const th=document.createElement('th');
+      th.textContent=txt;
+      thr.appendChild(th);
+    });
+  thead.appendChild(thr);
+  table.appendChild(thead);
+
+  const tbody=document.createElement('tbody');
+
+  for(let i=0; i<daysCount;i++){
+    if(i===7){
+      const spacerRow=document.createElement('tr');
+      spacerRow.classList.add('spacer-row');
+      const spacerCell=document.createElement('td');
+      spacerCell.colSpan=7;
+      spacerRow.appendChild(spacerCell);
+      tbody.appendChild(spacerRow);
+    }
+    const row=document.createElement('tr');
+    row.classList.add('timesheet-row');
+
+    const cur=new Date(start);
+    cur.setDate(cur.getDate()+i);
+    const yyyy=cur.getFullYear();
+    const mm= String(cur.getMonth()+1).padStart(2,'0');
+    const dd= String(cur.getDate()).padStart(2,'0');
+    const iso= `${yyyy}-${mm}-${dd}`;
+    row.setAttribute('data-date', iso);
+
+    const wdShort=cur.toLocaleDateString('en-US',{weekday:'short'});
+    const dtShort=cur.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});
+
+    const dateTd=document.createElement('td');
+    dateTd.textContent=`${wdShort} (${dtShort})`;
+
+    const st1Td=document.createElement('td');
+    const st1In=document.createElement('input');
+    st1In.type='time'; 
+    st1In.name='startTime1';
+    st1Td.appendChild(st1In);
+
+    const et1Td=document.createElement('td');
+    const et1In=document.createElement('input');
+    et1In.type='time'; 
+    et1In.name='endTime1';
+    et1Td.appendChild(et1In);
+
+    const st2Td=document.createElement('td');
+    const st2In=document.createElement('input');
+    st2In.type='time'; 
+    st2In.name='startTime2';
+    st2Td.appendChild(st2In);
+
+    const et2Td=document.createElement('td');
+    const et2In=document.createElement('input');
+    et2In.type='time'; 
+    et2In.name='endTime2';
+    et2Td.appendChild(et2In);
+
+    const jobTd=document.createElement('td');
+    const jobSel=document.createElement('select');
+    jobSel.name='jobDescription';
+    const jobList=["Meter Reader","Pump Maintenance","Customer Service","Utilities Maintenance","GIS/Mapping","Water Operator","Holiday","Paid Time Off"];
+    const emptyOpt=document.createElement('option');
+    emptyOpt.value="";
+    emptyOpt.textContent="(Select a job)";
+    jobSel.appendChild(emptyOpt);
+    jobList.forEach(j=>{
+      const op=document.createElement('option');
+      op.value=j;
+      op.textContent=j;
+      jobSel.appendChild(op);
+    });
+    jobTd.appendChild(jobSel);
+
+    const cTd=document.createElement('td');
+    const cIn=document.createElement('input');
+    cIn.type='text'; 
+    cIn.name='comment';
+    cTd.appendChild(cIn);
+
+    row.appendChild(dateTd);
+    row.appendChild(st1Td);
+    row.appendChild(et1Td);
+    row.appendChild(st2Td);
+    row.appendChild(et2Td);
+    row.appendChild(jobTd);
+    row.appendChild(cTd);
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  timesheetFormDiv.appendChild(table);
+}
+
+/*************************
+ * Load user timesheets (Past)
+ *************************/
+async function loadUserTimesheets(){
+  if(!currentUser) return;
+  const qSnap= await getDocs(query(collection(db,'timesheets'), where('userId','==',currentUser.uid)));
+  pastTimesheetsDiv.innerHTML="";
+  if(qSnap.empty){
+    pastTimesheetsDiv.textContent="You currently have no timesheets.";
+    return;
+  }
+  let docsArr=[];
+  qSnap.forEach(s=>{
+    const d=s.data();
+    if(d.userDeleted!==true){
+      docsArr.push({id:s.id, ...d});
+    }
+  });
+  if(docsArr.length===0){
+    pastTimesheetsDiv.textContent="You currently have no timesheets.";
+    return;
+  }
+  docsArr.sort((a,b)=> b.startDate.localeCompare(a.startDate));
+
+  docsArr.forEach(ts=>{
+    const item=document.createElement('div');
+    item.classList.add('timesheet-item');
+
+    const headDiv=document.createElement('div');
+    headDiv.classList.add('timesheet-item-header');
+    headDiv.innerHTML=`Timesheet<br>${ts.startDate} - ${ts.endDate}`;
+
+    const detailsDiv=document.createElement('div');
+    detailsDiv.classList.add('timesheet-details','hidden');
+
+    const tw=document.createElement('div');
+    tw.classList.add('table-wrapper');
+    const t=document.createElement('table');
+    t.style.tableLayout='fixed'; // narrower columns
+
+    const thead=document.createElement('thead');
+    const thr=document.createElement('tr');
+    ["Date","Start","End","Start","End","Job","Comment","Total Hrs"].forEach(tx=>{
+      const th=document.createElement('th');
+      th.textContent=tx;
+      thr.appendChild(th);
+    });
+    thead.appendChild(thr);
+    t.appendChild(thead);
+
+    const tb=document.createElement('tbody');
+    ts.entries.forEach((e,idx)=>{
+      if(idx===7){
+        const sr=document.createElement('tr');
+        sr.classList.add('spacer-row');
+        const sc=document.createElement('td');
+        sc.colSpan=8;
+        sr.appendChild(sc);
+        tb.appendChild(sr);
+      }
+      const row=document.createElement('tr');
+      const dateObj=new Date(e.date+"T12:00:00");
+      const wdShort=dateObj.toLocaleDateString('en-US',{weekday:'short'});
+      const dtShort=dateObj.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});
+      const dateHtml=`${wdShort}<br>(${dtShort})`;
+
+      const dCell=document.createElement('td');
+      dCell.innerHTML=dateHtml;
+
+      const st1Cell=document.createElement('td');
+      st1Cell.textContent= formatTime24ToAmPm(e.startTime1==="None"?"":e.startTime1);
+      const et1Cell=document.createElement('td');
+      et1Cell.textContent= formatTime24ToAmPm(e.endTime1==="None"?"":e.endTime1);
+
+      const st2Cell=document.createElement('td');
+      st2Cell.textContent= formatTime24ToAmPm(e.startTime2==="None"?"":e.startTime2);
+      const et2Cell=document.createElement('td');
+      et2Cell.textContent= formatTime24ToAmPm(e.endTime2==="None"?"":e.endTime2);
+
+      const jobCell=document.createElement('td');
+      jobCell.textContent=(e.jobDescription==="None")?"None":e.jobDescription;
+
+      const cCell=document.createElement('td');
+      cCell.textContent=(e.comment==="None")?"None":e.comment;
+
+      const hrsCell=document.createElement('td');
+      const hv=isNaN(e.totalHours)?0:e.totalHours;
+      hrsCell.textContent=hv.toFixed(2);
+
+      row.appendChild(dCell);
+      row.appendChild(st1Cell);
+      row.appendChild(et1Cell);
+      row.appendChild(st2Cell);
+      row.appendChild(et2Cell);
+      row.appendChild(jobCell);
+      row.appendChild(cCell);
+      row.appendChild(hrsCell);
+      tb.appendChild(row);
+    });
+    t.appendChild(tb);
+    tw.appendChild(t);
+    detailsDiv.appendChild(tw);
+
+    // “View” button
+    const bGroup=document.createElement('div');
+    bGroup.classList.add('inline-button-group');
+
+    const viewBtn=document.createElement('button');
+    viewBtn.textContent="View";
+    viewBtn.addEventListener('click',()=>{
+      if(detailsDiv.classList.contains('hidden')){
+        detailsDiv.classList.remove('hidden');
+        viewBtn.textContent="Back";
+      } else {
+        detailsDiv.classList.add('hidden');
+        viewBtn.textContent="View";
+      }
+    });
+    bGroup.appendChild(viewBtn);
+
+    item.appendChild(headDiv);
+    item.appendChild(detailsDiv);
+    item.appendChild(bGroup);
+    pastTimesheetsDiv.appendChild(item);
+
+    // A vertical container for “Unsubmit”/“Delete”
+    const vertContainer=document.createElement('div');
+    vertContainer.style.display="flex";
+    vertContainer.style.flexDirection="column";
+    vertContainer.style.alignItems="center";
+    vertContainer.style.gap="0.5rem";
+    vertContainer.style.marginTop="1rem";
+
+    // Unsubmit if !ts.approved && !ts.unsubmitted
+    if(!ts.approved && !ts.unsubmitted){
+      const unsubmitBtn=document.createElement('button');
+      unsubmitBtn.textContent="Unsubmit";
+      vertContainer.appendChild(unsubmitBtn);
+      unsubmitBtn.addEventListener('click', async()=>{
+        if(!confirm("Unsubmit this timesheet?")) return;
+        await updateDoc(doc(db,'timesheets',ts.id),{unsubmitted:true});
+        loadUserTimesheets();
+      });
+    }
+
+    // Delete
+    const deleteBtn=document.createElement('button');
+    deleteBtn.textContent="Delete";
+    vertContainer.appendChild(deleteBtn);
+    deleteBtn.addEventListener('click', async()=>{
+      if(!confirm("Delete this timesheet from your view?")) return;
+      await updateDoc(doc(db,'timesheets',ts.id),{userDeleted:true});
+      loadUserTimesheets();
+    });
+
+    
+
+    detailsDiv.appendChild(vertContainer);
+  });
+}
+
+/*************************
+ * ADMIN
+ *************************/
+async function loadAdminData(){
+  const all=await getDocs(collection(db,'timesheets'));
+  const userMapPending={};
+  const userMapApproved={};
+
+  all.forEach(ds=>{
+    const data=ds.data();
+    const { userId,userName,approved,unsubmitted,adminDeleted }= data;
+    if(adminDeleted) return;
+    if(!approved && !unsubmitted){
+      if(!userMapPending[userId]){
+        userMapPending[userId]={userName:userName||"Unknown", timesheets:[]};
+      }
+      userMapPending[userId].timesheets.push({id:ds.id, ...data});
+    } else if(approved){
+      if(!userMapApproved[userId]){
+        userMapApproved[userId]={userName:userName||"Unknown", timesheets:[]};
+      }
+      userMapApproved[userId].timesheets.push({id:ds.id, ...data});
+    }
+  });
+
+  adminUsersWrapper.innerHTML="";
+  adminApprovedWrapper.innerHTML="";
+  adminPendingViewContainer.innerHTML="";
+  adminApprovedViewContainer.innerHTML="";
+  adminPendingViewContainer.classList.add('hidden');
+  adminApprovedViewContainer.classList.add('hidden');
+  adminUsersWrapper.classList.remove('hidden');
+  adminApprovedWrapper.classList.remove('hidden');
+
+  // pending
+  const pUids= Object.keys(userMapPending).sort((a,b)=>
+    userMapPending[a].userName.localeCompare(userMapPending[b].userName));
+  if(pUids.length===0){
+    adminUsersWrapper.innerHTML="<p>You currently have no timesheets pending approval.</p>";
+  } else {
+    const pendingTableHTML=`
+      <table id="admin-users-table">
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="admin-users-tbody"></tbody>
+      </table>
+    `;
+    adminUsersWrapper.innerHTML=pendingTableHTML;
+    const newTbody=document.getElementById('admin-users-tbody');
+    pUids.forEach(uid=>{
+      const tr=document.createElement('tr');
+      const nameTd=document.createElement('td');
+      nameTd.innerHTML=`<strong>${userMapPending[uid].userName}</strong>`;
+      tr.appendChild(nameTd);
+
+      const actionTd=document.createElement('td');
+      const vBtn=document.createElement('button');
+      vBtn.textContent="View Timesheets";
+      vBtn.addEventListener('click',()=>{
+        adminUsersWrapper.classList.add('hidden');
+        adminApprovedWrapper.classList.remove('hidden');
+        adminPendingViewContainer.innerHTML="";
+        adminPendingViewContainer.classList.remove('hidden');
+        adminApprovedViewContainer.classList.add('hidden');
+        adminLogoutBtn.classList.add('hidden');
+
+        showAdminUserTimesheets(
+          uid,
+          userMapPending[uid].userName,
+          userMapPending[uid].timesheets,
+          false,
+          adminPendingViewContainer
+        );
+      });
+      actionTd.appendChild(vBtn);
+      tr.appendChild(actionTd);
+
+      newTbody.appendChild(tr);
+    });
+  }
+
+  // approved
+  const aUids= Object.keys(userMapApproved).sort((a,b)=>
+    userMapApproved[a].userName.localeCompare(userMapApproved[b].userName));
+  if(aUids.length===0){
+    adminApprovedWrapper.innerHTML="<p>You have no approved timesheets</p>";
+  } else {
+    const approvedTableHTML=`
+      <table id="admin-approved-table">
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="admin-approved-tbody"></tbody>
+      </table>
+    `;
+    adminApprovedWrapper.innerHTML=approvedTableHTML;
+    const newTbody=document.getElementById('admin-approved-tbody');
+    aUids.forEach(uid=>{
+      const tr=document.createElement('tr');
+      const nameTd=document.createElement('td');
+      nameTd.innerHTML=`<strong>${userMapApproved[uid].userName}</strong>`;
+      tr.appendChild(nameTd);
+
+      const actionTd=document.createElement('td');
+      const vBtn=document.createElement('button');
+      vBtn.textContent="View Timesheets";
+      vBtn.addEventListener('click',()=>{
+        adminApprovedWrapper.classList.add('hidden');
+        adminUsersWrapper.classList.remove('hidden');
+        adminApprovedViewContainer.innerHTML="";
+        adminApprovedViewContainer.classList.remove('hidden');
+        adminPendingViewContainer.classList.add('hidden');
+        adminLogoutBtn.classList.add('hidden');
+
+        showAdminUserTimesheets(
+          uid,
+          userMapApproved[uid].userName,
+          userMapApproved[uid].timesheets,
+          true,
+          adminApprovedViewContainer
+        );
+      });
+      actionTd.appendChild(vBtn);
+      tr.appendChild(actionTd);
+
+      newTbody.appendChild(tr);
+    });
+  }
+}
+
+/*************************
+ * ADMIN: show user timesheets
+ *************************/
+function showAdminUserTimesheets(uid, userName, timesheets, isApprovedSection, containerEl){
+  containerEl.innerHTML="";
+  containerEl.classList.remove('hidden');
+
+  timesheets.sort((a,b)=> b.startDate.localeCompare(a.startDate));
+  timesheets.forEach(ts=>{
+    const card=document.createElement('div');
+    card.classList.add('timesheet-item');
+
+    const hd=document.createElement('div');
+    hd.classList.add('timesheet-item-header');
+    hd.innerHTML=`${userName}<br>(${ts.startDate} - ${ts.endDate})`;
+
+    const det=document.createElement('div');
+    det.classList.add('timesheet-details','hidden');
+
+    const tw=document.createElement('div');
+    tw.classList.add('table-wrapper');
+    const table=document.createElement('table');
+    table.style.tableLayout='fixed';
+
+    const thead=document.createElement('thead');
+    const thr=document.createElement('tr');
+    ["Date","Start","End","Start","End","Job","Comment","Total Hrs"].forEach(txt=>{
+      const th=document.createElement('th');
+      th.textContent=txt;
+      thr.appendChild(th);
+    });
+    thead.appendChild(thr);
+    table.appendChild(thead);
+
+    const tb=document.createElement('tbody');
+    ts.entries.forEach((e, idx)=>{
+      if(idx===7){
+        const sr=document.createElement('tr');
+        sr.classList.add('spacer-row');
+        const sc=document.createElement('td');
+        sc.colSpan=8;
+        sr.appendChild(sc);
+        tb.appendChild(sr);
+      }
+      const row=document.createElement('tr');
+      const dObj=new Date(e.date+"T12:00:00");
+      const wdShort=dObj.toLocaleDateString('en-US',{weekday:'short'});
+      const dtShort=dObj.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});
+      const dateHtml=`${wdShort}<br>(${dtShort})`;
+
+      const dCell=document.createElement('td');
+      dCell.innerHTML=`<span${styleNone(e.date)}>${dateHtml}</span>`;
+
+      const st1Cell=document.createElement('td');
+      st1Cell.innerHTML=`<span${styleNone(e.startTime1)}>${formatTime24ToAmPm(e.startTime1||"None")}</span>`;
+      const et1Cell=document.createElement('td');
+      et1Cell.innerHTML=`<span${styleNone(e.endTime1)}>${formatTime24ToAmPm(e.endTime1||"None")}</span>`;
+
+      const st2Cell=document.createElement('td');
+      st2Cell.innerHTML=`<span${styleNone(e.startTime2)}>${formatTime24ToAmPm(e.startTime2||"None")}</span>`;
+      const et2Cell=document.createElement('td');
+      et2Cell.innerHTML=`<span${styleNone(e.endTime2)}>${formatTime24ToAmPm(e.endTime2||"None")}</span>`;
+
+      const jobCell=document.createElement('td');
+      jobCell.innerHTML=`<span${styleNone(e.jobDescription)}>${e.jobDescription||"None"}</span>`;
+
+      const cCell=document.createElement('td');
+      cCell.innerHTML=`<span${styleNone(e.comment)}>${e.comment||"None"}</span>`;
+
+      const hrsVal=isNaN(e.totalHours)?0:e.totalHours;
+      const hrsCell=document.createElement('td');
+      hrsCell.innerHTML=`<span${styleNone(e.totalHours)}>${hrsVal.toFixed(2)}</span>`;
+
+      row.appendChild(dCell);
+      row.appendChild(st1Cell);
+      row.appendChild(et1Cell);
+      row.appendChild(st2Cell);
+      row.appendChild(et2Cell);
+      row.appendChild(jobCell);
+      row.appendChild(cCell);
+      row.appendChild(hrsCell);
+      tb.appendChild(row);
+    });
+    table.appendChild(tb);
+    tw.appendChild(table);
+    det.appendChild(tw);
+
+    const btnGroup=document.createElement('div');
+    btnGroup.classList.add('inline-button-group');
+
+    const openBtn=document.createElement('button');
+    openBtn.textContent="Open";
+    openBtn.addEventListener('click',()=>{
+      if(det.classList.contains('hidden')){
+        det.classList.remove('hidden');
+        openBtn.textContent="Close";
+      } else {
+        det.classList.add('hidden');
+        openBtn.textContent="Open";
+      }
+    });
+    btnGroup.appendChild(openBtn);
+
+    if(isApprovedSection){
+      // Print & Delete
+      const printBtn=document.createElement('button');
+      printBtn.textContent="Print";
+      printBtn.addEventListener('click',()=>{
+        printOrExportTimesheet(ts,true);
+      });
+      btnGroup.appendChild(printBtn);
+
+      const delBtn=document.createElement('button');
+      delBtn.textContent="Delete";
+      delBtn.addEventListener('click',async()=>{
+        if(confirm("Are you sure you want to delete this timesheet? (User will still see it)")){
+          await updateDoc(doc(db,'timesheets',ts.id),{adminDeleted:true});
+          loadAdminData();
+        }
+      });
+      btnGroup.appendChild(delBtn);
+    } else {
+      // Approve button
+      const approveBtn=document.createElement('button');
+      approveBtn.textContent="Approve";
+      approveBtn.addEventListener('click',async()=>{
+        if(confirm("Approve this timesheet?")){
+          await updateDoc(doc(db,'timesheets',ts.id),{approved:true});
+          loadAdminData();
+        }
+      });
+      btnGroup.appendChild(approveBtn);
+    }
+
+    card.appendChild(hd);
+    card.appendChild(det);
+    card.appendChild(btnGroup);
+    containerEl.appendChild(card);
+  });
+
+  const backBtn=document.createElement('button');
+  backBtn.textContent="Back";
+  backBtn.style.display="block";
+  backBtn.style.margin="1rem auto 0 auto";
+  backBtn.addEventListener('click',()=>{
+    containerEl.classList.add('hidden');
+    containerEl.innerHTML="";
+    adminLogoutBtn.classList.remove('hidden');
+    if(!isApprovedSection){
+      adminUsersWrapper.classList.remove('hidden');
+    } else {
+      adminApprovedWrapper.classList.remove('hidden');
+    }
+  });
+  containerEl.appendChild(backBtn);
+}
+
+/*************************
+ * Print or Export PDF with Great Vibes cursive
+ * add short delay so font loads before printing
+ *************************/
+function printOrExportTimesheet(tsData, fromAdmin=false){
+  const popup=window.open('','_blank','width=800,height=600');
+  if(!popup) return;
+
+  // We load Great Vibes for fancy cursive:
+  const googleFontsLink=`
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+`;
+
+  const today = new Date().toLocaleDateString('en-US',{
+    month:'2-digit',day:'2-digit',year:'numeric'
+  });
+  const userName= tsData.userName;
+  // table-layout= fixed, smaller font => fits on page
+  const style=`
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+  body {
+    font-family: Arial, sans-serif; 
+    margin: 20px;
+  }
+  h1, h2 {
+    text-align: center; 
+    margin: 0;
+  }
+  table {
+    border-collapse: collapse; 
+    width: 100%; 
+    margin-top: 1rem;
+    table-layout: fixed; 
+    font-size: 0.85rem;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 0.4rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+  th {
+    background-color: #4299e1;
+    color: #fff;
+    font-weight: 600;
+  }
+  .cursive-name {
+    font-family: 'Great Vibes', cursive;
+    text-decoration: underline;
+    font-size: 2.3rem;
+  }
+</style>
+`;
+
+  let html=`
+<h1>Alco Water Service</h1>
+<h2>${userName} - Timesheet</h2>
+<p style="text-align:center;">Pay Period: ${tsData.startDate} to ${tsData.endDate}</p>
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Job</th>
+      <th>Comment</th>
+      <th>Total Hrs</th>
+    </tr>
+  </thead>
+  <tbody>
+`;
+
+  tsData.entries.forEach((e,idx)=>{
+    if(idx===7){
+      html+=`<tr><td colspan="8" style="border:none;"></td></tr>`;
+    }
+    const dObj=new Date(e.date+"T12:00:00");
+    const wdShort=dObj.toLocaleDateString('en-US',{weekday:'short'});
+    const dtShort=dObj.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});
+    const dateHtml=`${wdShort}<br>(${dtShort})`;
+
+    function maybeNone(v){
+      if(!v||v==="None"||v==="NaN"){
+        return `<span style="color:white;">None</span>`;
+      }
+      return v;
+    }
+    const st1= maybeNone(formatTime24ToAmPm(e.startTime1==="None"?"":e.startTime1));
+    const et1= maybeNone(formatTime24ToAmPm(e.endTime1==="None"?"":e.endTime1));
+    const st2= maybeNone(formatTime24ToAmPm(e.startTime2==="None"?"":e.startTime2));
+    const et2= maybeNone(formatTime24ToAmPm(e.endTime2==="None"?"":e.endTime2));
+    const job= maybeNone(e.jobDescription==="None"?"": e.jobDescription);
+    const cmt= maybeNone(e.comment==="None"?"": e.comment);
+    const hrsVal=isNaN(e.totalHours)?0:e.totalHours;
+    const hrs= maybeNone(hrsVal.toFixed(2));
+
+    html+=`
+<tr>
+  <td>${dateHtml}</td>
+  <td>${st1}</td>
+  <td>${et1}</td>
+  <td>${st2}</td>
+  <td>${et2}</td>
+  <td>${job}</td>
+  <td>${cmt}</td>
+  <td>${hrs}</td>
+</tr>`;
+  });
+
+  html+=`
+</tbody>
+</table>
+
+<p style="margin-top:2rem;">
+  I certify that I have worked the hours listed on the time card. 
+  While on this assignment I have not had any work related injuries or illnesses 
+  that I have not reported to Alco Water Service.
+</p>
+
+<p style="margin-top:2rem;">
+  Signature: <span class="cursive-name">${userName}</span>
+</p>
+
+<div style="margin-top:1.5rem;">
+  <p>Print Date: ${today}</p>
+</div>
+`;
+
+  popup.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Print Timesheet</title>
+  ${googleFontsLink}
+  ${style}
+</head>
+<body>
+${html}
+<script>
+  // Let the font load briefly before printing
+  setTimeout(() => {
+    window.focus();
+    window.print();
+    window.close();
+  }, 500);
+<\/script>
+</body>
+</html>
+`);
+  popup.document.close();
+}
+
+/*************************
+ * GEAR => open Easy Fill
+ *************************/
+gearButton.addEventListener('click',()=>{
+  userDashboard.classList.add('hidden');
+  easyfillSettingsContainer.style.display='block';
+  populateEasyFillTable();
+});
+
+/*************************
+ * Populate Easy Fill Table
+ *************************/
+function populateEasyFillTable(){
+  easyfillSettingsTbody.innerHTML="";
+  const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  dayNames.forEach(d=>{
+    const row=document.createElement('tr');
+    const dayCell=document.createElement('td');
+    dayCell.textContent=d;
+
+    const st1Cell=document.createElement('td');
+    st1Cell.classList.add('easyfill-time-cell');
+    const end1Cell=document.createElement('td');
+    end1Cell.classList.add('easyfill-time-cell');
+    const st2Cell=document.createElement('td');
+    st2Cell.classList.add('easyfill-time-cell');
+    const end2Cell=document.createElement('td');
+    end2Cell.classList.add('easyfill-time-cell');
+    const jobCell=document.createElement('td');
+    const cmtCell=document.createElement('td');
+
+    const info=userEasyFillSettings[d]||{};
+    st1Cell.textContent= formatTime24ToAmPm(info.start1||"");
+    end1Cell.textContent= formatTime24ToAmPm(info.end1||"");
+    st2Cell.textContent= formatTime24ToAmPm(info.start2||"");
+    end2Cell.textContent= formatTime24ToAmPm(info.end2||"");
+    jobCell.textContent= info.job||"";
+    cmtCell.textContent= info.comment||"";
+
+    row.appendChild(dayCell);
+    row.appendChild(st1Cell);
+    row.appendChild(end1Cell);
+    row.appendChild(st2Cell);
+    row.appendChild(end2Cell);
+    row.appendChild(jobCell);
+    row.appendChild(cmtCell);
+
+    // Double‐click => edit if not editing
+    for(let j=1;j<row.cells.length;j++){
+      row.cells[j].addEventListener('dblclick',()=>{
+        if(!editingEasyFill){
+          easyfillEditBtn.click();
+        }
+      });
+    }
+
+    easyfillSettingsTbody.appendChild(row);
+  });
+}
+
+/*************************
+ * EasyFill Edit / Save
+ *************************/
+let editingEasyFill=false;
+easyfillEditBtn.addEventListener('click', async()=>{
+  if(!editingEasyFill){
+    editingEasyFill=true;
+    easyfillEditBtn.textContent="Save";
+
+    for(let i=0;i<easyfillSettingsTbody.rows.length;i++){
+      const row= easyfillSettingsTbody.rows[i];
+      // columns: Day, st1, e1, st2, e2, job, comment
+      for(let c=1;c<=4;c++){
+        const cell= row.cells[c];
+        const txt= cell.textContent.trim();
+        cell.textContent="";
+        const inp= document.createElement('input');
+        inp.type='time';
+        const c24= parseAmPmTo24Hr(txt);
+        if(c24) inp.value= c24;
+        cell.appendChild(inp);
+      }
+      // job
+      {
+        const cell=row.cells[5];
+        const txt= cell.textContent.trim();
+        cell.textContent="";
+        const sel= document.createElement('select');
+        const arr=["","Meter Reader","Pump Maintenance","Customer Service","Utilities Maintenance","GIS/Mapping","Water Operator","Holiday","Paid Time Off"];
+        arr.forEach(optVal=>{
+          const o=document.createElement('option');
+          o.value=optVal;
+          o.textContent=(optVal===""?"(Select a job)":optVal);
+          if(optVal===txt) o.selected=true;
+          sel.appendChild(o);
+        });
+        cell.appendChild(sel);
+      }
+      // comment
+      {
+        const cell=row.cells[6];
+        const txt= cell.textContent.trim();
+        cell.textContent="";
+        const cIn= document.createElement('input');
+        cIn.type='text';
+        cIn.value= txt;
+        cell.appendChild(cIn);
+      }
+    }
+
+  } else {
+    // Save
+    editingEasyFill=false;
+    easyfillEditBtn.textContent="Edit";
+
+    const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    for(let i=0;i<easyfillSettingsTbody.rows.length;i++){
+      const row= easyfillSettingsTbody.rows[i];
+      const dName= dayNames[i];
+      const st1In=row.cells[1].querySelector('input');
+      const e1In=row.cells[2].querySelector('input');
+      const st2In=row.cells[3].querySelector('input');
+      const e2In=row.cells[4].querySelector('input');
+      const jobSel=row.cells[5].querySelector('select');
+      const cIn= row.cells[6].querySelector('input');
+
+      const s1= st1In.value.trim()||"";
+      const e1= e1In.value.trim()||"";
+      const s2= st2In.value.trim()||"";
+      const e2= e2In.value.trim()||"";
+      const jv= jobSel.value.trim()||"";
+      const cv= cIn.value.trim()||"";
+
+      userEasyFillSettings[dName]={
+        start1: s1,
+        end1:   e1,
+        start2: s2,
+        end2:   e2,
+        job:    jv,
+        comment:cv
+      };
+    }
+    await setDoc(doc(db,'easyfillsettings',currentUser.uid), userEasyFillSettings);
+    populateEasyFillTable();
+  }
+});
+
+easyfillBackBtn.addEventListener('click',()=>{
+  easyfillSettingsContainer.style.display='none';
+  userDashboard.classList.remove('hidden');
+});
+
+/*************************
+ * Done: init
+ *************************/
+showUserLogin();
+</script>
+</body>
+</html>
