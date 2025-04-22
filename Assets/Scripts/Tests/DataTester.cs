@@ -7,6 +7,8 @@ public class DataTester : MonoBehaviour
     public bool checkResources = true;
     public bool runLevelLoadingTest = true;
     public bool testLevelSelection = true;
+    public bool testRPNEvaluator = true;
+    public bool testWaveSpawning = true;
 
     void Start()
     {
@@ -50,6 +52,18 @@ public class DataTester : MonoBehaviour
         {
             gameObject.AddComponent<LevelSelectionTest>();
             Debug.Log("Added LevelSelectionTest component");
+        }
+        
+        if (testRPNEvaluator)
+        {
+            gameObject.AddComponent<RPNEvaluatorTest>();
+            Debug.Log("Added RPNEvaluatorTest component");
+        }
+        
+        if (testWaveSpawning)
+        {
+            gameObject.AddComponent<WaveSpawningTest>();
+            Debug.Log("Added WaveSpawningTest component");
         }
     }
 } 
