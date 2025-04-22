@@ -16,7 +16,6 @@ public class WaveCompletedPanel : MonoBehaviour
     public bool showEnemiesDefeated = true;
     public bool showTimeSpent = true;
     public bool showWaveNumber = true;
-    public bool showDamageDealt = true;
     public bool showDamageReceived = true;
 
     private EnemySpawner spawner;
@@ -92,11 +91,6 @@ public class WaveCompletedPanel : MonoBehaviour
                 sb.AppendLine($"Enemies defeated: {stats.enemiesDefeated}");
             }
             
-            if (showDamageDealt)
-            {
-                sb.AppendLine($"Damage dealt: {stats.damageDealt}");
-            }
-            
             if (showDamageReceived)
             {
                 sb.AppendLine($"Damage received: {stats.damageReceived}");
@@ -139,4 +133,4 @@ public class WaveCompletedPanel : MonoBehaviour
         int secs = Mathf.FloorToInt(seconds - minutes * 60);
         return $"{minutes:00}:{secs:00}";
     }
-} 
+}
