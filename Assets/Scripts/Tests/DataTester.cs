@@ -5,6 +5,8 @@ public class DataTester : MonoBehaviour
     public bool testEnemyData = true;
     public bool testLevelData = true;
     public bool checkResources = true;
+    public bool runLevelLoadingTest = true;
+    public bool testLevelSelection = true;
 
     void Start()
     {
@@ -36,6 +38,18 @@ public class DataTester : MonoBehaviour
         {
             gameObject.AddComponent<LevelDataTest>();
             Debug.Log("Added LevelDataTest component");
+        }
+        
+        if (runLevelLoadingTest)
+        {
+            gameObject.AddComponent<LevelLoadingTest>();
+            Debug.Log("Added LevelLoadingTest component");
+        }
+        
+        if (testLevelSelection)
+        {
+            gameObject.AddComponent<LevelSelectionTest>();
+            Debug.Log("Added LevelSelectionTest component");
         }
     }
 } 
