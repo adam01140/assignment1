@@ -1,0 +1,66 @@
+# Wave Completed Panel Setup Instructions
+
+To set up the between-wave UI panel that shows statistics, follow these steps:
+
+1. In the Hierarchy, create a new UI Canvas if one doesn't already exist
+   - Right-click in Hierarchy → UI → Canvas
+   - Make sure it has a Canvas Scaler component set to "Scale with Screen Size"
+
+2. Create a Panel as a child of the Canvas
+   - Right-click on Canvas → UI → Panel
+   - Name it "WaveCompletedPanel"
+   - Adjust its RectTransform:
+     - Width: 500
+     - Height: 400
+     - Anchors: Middle-Center
+
+3. Add a Title Text to the panel
+   - Right-click on WaveCompletedPanel → UI → Text - TextMeshPro
+   - Name it "TitleText"
+   - Set Font Size to 36
+   - Set Alignment to Center
+   - Position it at the top of the panel
+   - This will be the "Wave X Completed!" text
+
+4. Add a Stats Text to the panel
+   - Right-click on WaveCompletedPanel → UI → Text - TextMeshPro
+   - Name it "StatsText"
+   - Set Font Size to 24
+   - Set Alignment to Left
+   - Position it in the middle of the panel
+   - This will show enemy count, time, damage dealt, etc.
+
+5. Add a Continue Button to the panel
+   - Right-click on WaveCompletedPanel → UI → Button - TextMeshPro
+   - Name it "ContinueButton"
+   - Set its Text to "Continue"
+   - Position it at the bottom of the panel
+
+6. Add the WaveCompletedPanel script
+   - Select the WaveCompletedPanel GameObject
+   - Add Component → WaveCompletedPanel
+   - Assign the references:
+     - Panel: The WaveCompletedPanel GameObject itself
+     - Wave Info Text: The TitleText
+     - Stats Text: The StatsText
+     - Continue Button: The ContinueButton
+
+7. Update the EnemySpawner reference
+   - Find the EnemySpawner in your scene
+   - Add a reference to your WaveCompletedPanel in the "Wave Completed Panel" field
+
+8. Test in Play mode
+   - Start a level and complete a wave
+   - The panel should appear showing wave statistics
+   - Click Continue to proceed to the next wave
+
+## Additional Customization
+
+You can customize which statistics are shown by toggling the boolean options in the WaveCompletedPanel component:
+- Show Enemies Defeated
+- Show Time Spent
+- Show Wave Number
+- Show Damage Dealt
+- Show Damage Received
+
+You can also style the panel with images, colors, and animations to match your game's visual style. 

@@ -1,0 +1,80 @@
+# Setting up the WaveCompletedPanel in Unity
+
+## Step 1: Create the Panel GameObject
+1. In the Unity Hierarchy window, right-click on the Canvas object and select UI > Panel
+2. Rename the panel to "WaveCompletedPanel"
+3. Set its RectTransform properties:
+   - Anchors: Middle-Center
+   - Position: X=0, Y=0, Z=0
+   - Width: 400
+   - Height: 300
+4. Adjust the panel's appearance in the Inspector:
+   - Set the Image color to a semi-transparent dark color (e.g., RGBA: 0, 0, 0, 0.8)
+
+## Step 2: Add Header Text
+1. Right-click on the WaveCompletedPanel and select UI > TextMeshPro - Text
+2. Rename it to "HeaderText"
+3. Set its RectTransform properties:
+   - Anchors: Top-Center
+   - Position: X=0, Y=-30, Z=0
+   - Width: 380
+   - Height: 50
+4. Configure the TextMeshPro component:
+   - Text: "Wave Completed!"
+   - Font Size: 36
+   - Font Style: Bold
+   - Alignment: Center
+   - Color: White or another bright color that stands out
+
+## Step 3: Add Stats Text
+1. Right-click on the WaveCompletedPanel and select UI > TextMeshPro - Text
+2. Rename it to "StatsText"
+3. Set its RectTransform properties:
+   - Anchors: Middle-Center
+   - Position: X=0, Y=0, Z=0
+   - Width: 360
+   - Height: 160
+4. Configure the TextMeshPro component:
+   - Text: (Leave blank, will be populated by script)
+   - Font Size: 24
+   - Alignment: Left
+   - Color: White
+   - Paragraph Spacing: 10
+   
+## Step 4: Add Continue Button
+1. Right-click on the WaveCompletedPanel and select UI > Button
+2. Rename it to "ContinueButton"
+3. Set its RectTransform properties:
+   - Anchors: Bottom-Center
+   - Position: X=0, Y=30, Z=0
+   - Width: 160
+   - Height: 50
+4. Configure the Button component appearance as desired
+5. Replace the "Text" child with a TextMeshPro - Text:
+   - Delete the existing Text child
+   - Right-click on the ContinueButton and select UI > TextMeshPro - Text
+   - Set the text to "Continue"
+   - Font Size: 24
+   - Alignment: Center
+   - Font Style: Bold
+
+## Step 5: Add the WaveCompletedPanel Script
+1. Select the WaveCompletedPanel GameObject
+2. In the Inspector, click "Add Component"
+3. Search for and add the "Wave Completed Panel" script
+4. Assign the references in the script component:
+   - Panel: Drag the WaveCompletedPanel itself
+   - Wave Info Text: Drag the HeaderText
+   - Stats Text: Drag the StatsText
+   - Continue Button: Drag the ContinueButton
+5. Configure the Stats Display options as desired (all checkboxes are enabled by default)
+
+## Step 6: Connect to the EnemySpawner
+1. Find the GameObject with the EnemySpawner component in your scene
+2. Select it and look for the "Wave Completed Panel" field in the Inspector
+3. Drag the WaveCompletedPanel GameObject into this field
+
+## Final Notes
+- Make sure the panel is initially inactive (uncheck the checkbox next to its name in the Inspector)
+- Test the wave system to ensure the panel appears after completing a wave
+- You can customize the appearance of the panel, text, and button to match your game's visual style 

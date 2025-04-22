@@ -12,10 +12,13 @@ public class Hittable
 
     public GameObject owner;
 
+    public event Action<Damage> OnDamage;
+
     public void Damage(Damage damage)
     {
         EventBus.Instance.DoDamage(owner.transform.position, damage, this);
         hp -= damage.amount;
+        OnDamage?.Invoke(damage);
         if (hp <= 0)
         {
             hp = 0;

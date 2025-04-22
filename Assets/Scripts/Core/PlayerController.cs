@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     public int speed;
 
     public Unit unit;
+    
+    // Add stats tracking
+    public static System.Action<int> OnDamageReceived;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,12 +35,19 @@ public class PlayerController : MonoBehaviour
         
         hp = new Hittable(100, Hittable.Team.PLAYER, gameObject);
         hp.OnDeath += Die;
+        hp.OnDamage += OnDamageTaken;
         hp.team = Hittable.Team.PLAYER;
 
         // tell UI elements what to show
         healthui.SetHealth(hp);
         manaui.SetSpellCaster(spellcaster);
         spellui.SetSpell(spellcaster.spell);
+    }
+    
+    void OnDamageTaken(Damage damage)
+    {
+        // Report damage received for statistics
+        OnDamageReceived?.Invoke(damage.amount);
     }
 
     // Update is called once per frame
@@ -64,6 +74,6 @@ public class PlayerController : MonoBehaviour
     void Die()
     {
         Debug.Log("You Lost");
+        GameManager.Instance.state = GameManager.GameState.GAMEOVER;
     }
-
 }

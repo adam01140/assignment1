@@ -15,13 +15,40 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;
     
+    [Header("Wave UI")]
+    public WaveCompletedPanel waveCompletedPanel;
+    
     private string currentLevelName;
     private Level currentLevel;
     private int currentWave = 0;
     private int totalWaves = 0;
     
+    // Statistics tracking
+    private WaveStatistics currentWaveStats;
+    private List<WaveStatistics> allWaveStats = new List<WaveStatistics>();
+    
     // UI for displaying wave information
     private GameObject waveInfoPanel;
+
+    void Awake()
+    {
+        // Initialize the wave completed panel
+        if (waveCompletedPanel != null)
+        {
+            waveCompletedPanel.Initialize(this);
+        }
+        
+        // Set up event listeners for statistics tracking
+        EnemyController.OnEnemyDefeated += OnEnemyDefeated;
+        PlayerController.OnDamageReceived += OnPlayerDamageReceived;
+    }
+    
+    void OnDestroy()
+    {
+        // Clean up event listeners
+        EnemyController.OnEnemyDefeated -= OnEnemyDefeated;
+        PlayerController.OnDamageReceived -= OnPlayerDamageReceived;
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,7 +59,39 @@ public class EnemySpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // Check for game state change
+        if (GameManager.Instance.state == GameManager.GameState.WAVEEND && waveCompletedPanel != null)
+        {
+            // If the panel isn't active, show it with the current statistics
+            if (!waveCompletedPanel.panel.activeSelf)
+            {
+                // Finalize the current wave's statistics
+                if (currentWaveStats != null)
+                {
+                    currentWaveStats.FinalizeStats();
+                    
+                    // Show the wave completed panel
+                    waveCompletedPanel.ShowPanel(currentWave, totalWaves, currentWaveStats);
+                }
+            }
+        }
+    }
+    
+    // Event handlers for statistics tracking
+    private void OnEnemyDefeated()
+    {
+        if (currentWaveStats != null)
+        {
+            currentWaveStats.AddEnemyDefeated();
+        }
+    }
+    
+    private void OnPlayerDamageReceived(int damage)
+    {
+        if (currentWaveStats != null)
+        {
+            currentWaveStats.AddDamageReceived(damage);
+        }
     }
     
     private void CreateLevelSelectionButtons()
@@ -91,6 +150,9 @@ public class EnemySpawner : MonoBehaviour
         currentLevel = LevelData.Instance.GetLevel(levelName);
         currentWave = 0;
         
+        // Clear previous wave statistics
+        allWaveStats.Clear();
+        
         if (currentLevel != null)
         {
             totalWaves = currentLevel.waves;
@@ -120,9 +182,20 @@ public class EnemySpawner : MonoBehaviour
         // Increase wave count
         currentWave++;
         
+        // Hide the wave completed panel if it's showing
+        if (waveCompletedPanel != null)
+        {
+            waveCompletedPanel.HidePanel();
+        }
+        
         if (currentWave <= totalWaves)
         {
             Debug.Log($"Starting wave {currentWave} of {totalWaves}");
+            
+            // Create new statistics for this wave
+            currentWaveStats = WaveStatistics.CreateForWave(currentWave);
+            allWaveStats.Add(currentWaveStats);
+            
             StartCoroutine(SpawnWave(currentWave));
         }
         else
@@ -190,6 +263,9 @@ public class EnemySpawner : MonoBehaviour
         // Evaluate how many of this enemy to spawn
         int count = RPNEvaluator.Evaluate(spawnConfig.count, variables);
         Debug.Log($"Spawning {count} {spawnConfig.enemy}(s) in wave {waveNumber}");
+        
+        // Update statistics for spawned enemies
+        currentWaveStats.enemiesSpawned += count;
         
         // Evaluate HP, speed, and damage
         int hp = spawnConfig.hp != null ? 
