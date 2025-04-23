@@ -23,93 +23,70 @@ public class EnemySpawner : MonoBehaviour
     private int currentWave = 0;
     private int totalWaves = 0;
     
-    // Statistics tracking
     private WaveStatistics currentWaveStats;
     private List<WaveStatistics> allWaveStats = new List<WaveStatistics>();
     
-    // UI for displaying wave information
     private GameObject waveInfoPanel;
 
     void Awake()
     {
-        // Initialize the wave completed panel
         InitializeWaveCompletedPanel();
         
-        // Set up event listeners for statistics tracking
         EnemyController.OnEnemyDefeated += OnEnemyDefeated;
         PlayerController.OnDamageReceived += OnPlayerDamageReceived;
     }
     
-    // Method to initialize or find WaveCompletedPanel
     public void InitializeWaveCompletedPanel()
     {
-        // If already set, initialize it
         if (waveCompletedPanel != null)
         {
             waveCompletedPanel.Initialize(this);
-            Debug.Log("Initialized existing WaveCompletedPanel reference");
             return;
         }
         
-        // Try to find one in the scene
         waveCompletedPanel = FindObjectOfType<WaveCompletedPanel>();
         if (waveCompletedPanel != null)
         {
             waveCompletedPanel.Initialize(this);
-            Debug.Log("Found and initialized WaveCompletedPanel in scene");
-        }
-        else
-        {
-            Debug.LogWarning("WaveCompletedPanel not found in EnemySpawner - will try to connect later if one is created");
         }
     }
     
-    // Public method to set the reference to WaveCompletedPanel
     public void SetWaveCompletedPanel(WaveCompletedPanel panel)
     {
         if (panel != null)
         {
             waveCompletedPanel = panel;
             waveCompletedPanel.Initialize(this);
-            Debug.Log("WaveCompletedPanel reference set in EnemySpawner");
         }
     }
     
     void OnDestroy()
     {
-        // Clean up event listeners
         EnemyController.OnEnemyDefeated -= OnEnemyDefeated;
         PlayerController.OnDamageReceived -= OnPlayerDamageReceived;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         CreateLevelSelectionButtons();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // Check for game state change
         if (GameManager.Instance.state == GameManager.GameState.WAVEEND && waveCompletedPanel != null)
         {
-            // If the panel isn't active, show it with the current statistics
             if (!waveCompletedPanel.panel.activeSelf)
             {
-                // Finalize the current wave's statistics
                 if (currentWaveStats != null)
                 {
                     currentWaveStats.FinalizeStats();
                     
-                    // Show the wave completed panel
                     waveCompletedPanel.ShowPanel(currentWave, totalWaves, currentWaveStats);
                 }
             }
         }
     }
     
-    // Getter methods for wave information
     public int GetCurrentWave()
     {
         return currentWave;
@@ -122,17 +99,14 @@ public class EnemySpawner : MonoBehaviour
     
     public WaveStatistics GetCurrentWaveStats()
     {
-        // If currentWaveStats is null, create a simple default one
         if (currentWaveStats == null)
         {
             currentWaveStats = WaveStatistics.CreateForWave(currentWave);
             currentWaveStats.FinalizeStats();
-            Debug.LogWarning("Created default wave statistics since none were available");
         }
         return currentWaveStats;
     }
     
-    // Event handlers for statistics tracking
     private void OnEnemyDefeated()
     {
         if (currentWaveStats != null)
@@ -151,22 +125,18 @@ public class EnemySpawner : MonoBehaviour
     
     private void CreateLevelSelectionButtons()
     {
-        // Load all the available levels
         List<Level> levels = LevelData.Instance.GetAllLevels();
         
         if (levels == null || levels.Count == 0)
         {
-            Debug.LogError("No levels found! Creating a default Start button.");
             CreateSingleButton("Start", 0);
             return;
         }
         
-        // Calculate vertical spacing and starting position
         float buttonHeight = 60f;
         float spacing = 20f;
         float startY = (levels.Count - 1) * (buttonHeight + spacing) / 2;
         
-        // Create a button for each level
         for (int i = 0; i < levels.Count; i++)
         {
             Level level = levels[i];
@@ -174,7 +144,6 @@ public class EnemySpawner : MonoBehaviour
             CreateSingleButton(level.name, yPos);
         }
         
-        // Add a title above the buttons
         GameObject titleObj = new GameObject("LevelSelectTitle");
         titleObj.transform.SetParent(level_selector.transform, false);
         
@@ -184,7 +153,6 @@ public class EnemySpawner : MonoBehaviour
         titleText.alignment = TextAlignmentOptions.Center;
         titleText.color = Color.white;
         
-        // Position the title above the buttons
         float titleY = startY + buttonHeight + spacing;
         titleObj.transform.localPosition = new Vector3(0, titleY, 0);
     }
@@ -205,39 +173,29 @@ public class EnemySpawner : MonoBehaviour
         currentLevel = LevelData.Instance.GetLevel(levelName);
         currentWave = 0;
         
-        // Clear previous wave statistics
         allWaveStats.Clear();
         
         if (currentLevel != null)
         {
             totalWaves = currentLevel.waves;
             
-            // Handle endless mode, which doesn't specify a wave count
             if (totalWaves == 0 && currentLevelName == "Endless")
             {
-                totalWaves = int.MaxValue; // Effectively infinite
+                totalWaves = int.MaxValue;
             }
             
         level_selector.gameObject.SetActive(false);
             
-            // Initialize the player
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
             
-            // Start first wave
             StartWave();
-        }
-        else
-        {
-            Debug.LogError($"Could not find level data for '{levelName}'");
         }
     }
     
     public void StartWave()
     {
-        // Increase wave count
         currentWave++;
         
-        // Hide the wave completed panel if it's showing
         if (waveCompletedPanel != null)
         {
             waveCompletedPanel.HidePanel();
@@ -245,9 +203,6 @@ public class EnemySpawner : MonoBehaviour
         
         if (currentWave <= totalWaves)
         {
-            Debug.Log($"Starting wave {currentWave} of {totalWaves}");
-            
-            // Create new statistics for this wave
             currentWaveStats = WaveStatistics.CreateForWave(currentWave);
             allWaveStats.Add(currentWaveStats);
             
@@ -255,10 +210,7 @@ public class EnemySpawner : MonoBehaviour
         }
         else
         {
-            // Player has completed all waves
             GameManager.Instance.state = GameManager.GameState.GAMEOVER;
-            Debug.Log("All waves completed!");
-            // TODO: Show victory screen
         }
     }
 
@@ -269,11 +221,8 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnWave(int waveNumber)
     {
-        // Initial countdown
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         GameManager.Instance.countdown = 3;
-        
-        Debug.Log($"Wave {waveNumber} countdown starting...");
         
         for (int i = 3; i > 0; i--)
         {
@@ -283,46 +232,33 @@ public class EnemySpawner : MonoBehaviour
         
         GameManager.Instance.state = GameManager.GameState.INWAVE;
         
-        Debug.Log($"Wave {waveNumber} started!");
-        
-        // Spawn each enemy type according to the level configuration
         foreach (Spawn spawnConfig in currentLevel.spawns)
         {
             yield return StartCoroutine(SpawnEnemiesOfType(spawnConfig, waveNumber));
         }
         
-        // Wait until all enemies are defeated
         yield return new WaitWhile(() => GameManager.Instance.enemy_count > 0);
         
-        Debug.Log($"Wave {waveNumber} completed!");
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
     }
 
     IEnumerator SpawnEnemiesOfType(Spawn spawnConfig, int waveNumber)
     {
-        // Variables for RPN evaluation
         Dictionary<string, int> variables = new Dictionary<string, int>();
         variables["wave"] = waveNumber;
         
-        // Get the enemy data
         Enemy enemyData = EnemyData.Instance.GetEnemy(spawnConfig.enemy);
         if (enemyData == null)
         {
-            Debug.LogError($"Enemy data not found for '{spawnConfig.enemy}'");
             yield break;
         }
         
-        // Add base stats from enemy data
         variables["base"] = enemyData.hp;
         
-        // Evaluate how many of this enemy to spawn
         int count = RPNEvaluator.Evaluate(spawnConfig.count, variables);
-        Debug.Log($"Spawning {count} {spawnConfig.enemy}(s) in wave {waveNumber}");
         
-        // Update statistics for spawned enemies
         currentWaveStats.enemiesSpawned += count;
         
-        // Evaluate HP, speed, and damage
         int hp = spawnConfig.hp != null ? 
             RPNEvaluator.Evaluate(spawnConfig.hp, variables) : 
             enemyData.hp;
@@ -337,40 +273,31 @@ public class EnemySpawner : MonoBehaviour
             RPNEvaluator.Evaluate(spawnConfig.damage, variables) : 
             enemyData.damage;
         
-        // Get delay between spawns
         float delay = spawnConfig.delay != null ? 
             RPNEvaluator.Evaluate(spawnConfig.delay, variables) : 
             2;
             
-        // Get the spawn sequence
         List<int> sequence = spawnConfig.GetSequence();
         
-        // Spawn enemies according to the sequence pattern
         int enemiesLeft = count;
         int sequenceIndex = 0;
         
         while (enemiesLeft > 0)
         {
-            // Get number to spawn in this batch from the sequence
             int batchSize = sequence[sequenceIndex % sequence.Count];
             
-            // Cap the batch size at the remaining enemies
             batchSize = Mathf.Min(batchSize, enemiesLeft);
             
-            // Spawn the enemies in this batch
             for (int i = 0; i < batchSize; i++)
             {
                 SpawnSingleEnemy(spawnConfig.enemy, enemyData.sprite, hp, speed, damage, spawnConfig.location);
                 enemiesLeft--;
                 
-                // Small delay between individual enemies in the same batch
                 yield return new WaitForSeconds(0.1f);
             }
             
-            // Move to next sequence element
             sequenceIndex++;
             
-            // Wait for the configured delay between batches if there are more enemies to spawn
             if (enemiesLeft > 0)
             {
                 yield return new WaitForSeconds(delay);
@@ -380,17 +307,14 @@ public class EnemySpawner : MonoBehaviour
     
     public GameObject SpawnSingleEnemy(string enemyType, int spriteIndex, int hp, int speed, int damage, string location)
     {
-        // Select a spawn point based on location parameter
         SpawnPoint spawn_point;
         
         if (location == "random")
         {
-            // Any spawn point
             spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)];
         }
         else
         {
-            // Filter spawn points by type
             string[] locationParts = location.Split(' ');
             string spawnType = locationParts.Length > 1 ? locationParts[1] : "";
             
@@ -402,50 +326,38 @@ public class EnemySpawner : MonoBehaviour
             }
             else
             {
-                // Fallback to any spawn point
                 spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)];
-                Debug.LogWarning($"No spawn points of type '{spawnType}' found. Using random spawn point instead.");
             }
         }
         
-        // Add a random offset within the spawn area
         Vector2 offset = Random.insideUnitCircle * 1.8f;
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         
-        // Create the enemy instance
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        // Set the sprite
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(spriteIndex);
         
-        // Special handling for necromancer enemies
         if (enemyType == "necromancer")
         {
-            // Remove the default EnemyController if it exists
             EnemyController oldController = new_enemy.GetComponent<EnemyController>();
             if (oldController != null)
             {
                 Destroy(oldController);
             }
             
-            // Add NecromancerController with the specified stats
             NecromancerController necroController = new_enemy.AddComponent<NecromancerController>();
             necroController.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
             necroController.speed = speed;
             necroController.damage = damage;
-            
-            Debug.Log($"Spawned necromancer with HP: {hp}, Speed: {speed}, Damage: {damage}");
         }
         else
         {
-            // Configure the standard enemy controller for other enemy types
-        EnemyController en = new_enemy.GetComponent<EnemyController>();
+            EnemyController en = new_enemy.GetComponent<EnemyController>();
             en.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
             en.speed = speed;
             en.damage = damage;
         }
         
-        // Add to the game manager's enemy list
         GameManager.Instance.AddEnemy(new_enemy);
         
         return new_enemy;

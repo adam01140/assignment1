@@ -32,7 +32,6 @@ public class Spawn
         return $"Spawn: {enemy} (Count: {count}, HP: {hp}, Location: {location})";
     }
 
-    // Helper method to get default sequence if none is specified
     public List<int> GetSequence()
     {
         if (sequence == null || sequence.Count == 0)

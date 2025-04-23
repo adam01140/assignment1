@@ -37,53 +37,38 @@ public class LevelData : MonoBehaviour
 
     private void LoadLevels()
     {
-        Debug.Log("LevelData.LoadLevels() - Starting to load levels from JSON");
-        
-        // Load the JSON file from Resources
         TextAsset levelsJson = Resources.Load<TextAsset>("levels");
         
         if (levelsJson == null)
         {
-            Debug.LogError("Failed to load levels.json from Resources folder! Make sure the file exists at Assets/Resources/levels.json");
             return;
         }
         
-        Debug.Log($"Loaded levels.json text: {levelsJson.text.Substring(0, Mathf.Min(100, levelsJson.text.Length))}...");
-        
         try
         {
-            // Deserialize the JSON into a list of Level objects
             levels = JsonConvert.DeserializeObject<List<Level>>(levelsJson.text);
             
             if (levels == null)
             {
-                Debug.LogError("Failed to deserialize levels JSON! Result was null.");
                 return;
             }
             
             if (levels.Count == 0)
             {
-                Debug.LogWarning("Deserialized levels list is empty. Check JSON format.");
                 return;
             }
 
-            // Store levels in a dictionary for quick lookup by name
             levelDictionary.Clear();
             foreach (Level level in levels)
             {
                 levelDictionary[level.name] = level;
-                Debug.Log($"Loaded level: {level}");
             }
-            
-            Debug.Log($"Successfully loaded {levels.Count} levels!");
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"Exception during level JSON deserialization: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
-    // Get a level by name
     public Level GetLevel(string name)
     {
         if (levelDictionary.TryGetValue(name, out Level level))
@@ -91,11 +76,9 @@ public class LevelData : MonoBehaviour
             return level;
         }
         
-        Debug.LogWarning($"Level with name '{name}' not found!");
         return null;
     }
 
-    // Get all levels
     public List<Level> GetAllLevels()
     {
         return new List<Level>(levels);
