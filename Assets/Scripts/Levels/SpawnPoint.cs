@@ -8,6 +8,8 @@ public class SpawnPoint : MonoBehaviour
     }
 
     public SpawnName kind;
+    
+    [Tooltip("Used for selecting spawn points by type in level data (red, green, bone)")]
     public string type;
 
     void Start()
@@ -30,5 +32,10 @@ public class SpawnPoint : MonoBehaviour
                     break;
             }
         }
+    }
+
+    void Update()
+    {
+        
     }
 }

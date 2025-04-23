@@ -13,7 +13,7 @@ public class EnemySpawner : MonoBehaviour
     public Image level_selector;
     public GameObject button;
     public GameObject enemy;
-    public SpawnPoint[] SpawnPoints;
+    public SpawnPoint[] SpawnPoints;    
     
     [Header("Wave UI")]
     public WaveCompletedPanel waveCompletedPanel;
@@ -184,9 +184,9 @@ public class EnemySpawner : MonoBehaviour
                 totalWaves = int.MaxValue;
             }
             
-            level_selector.gameObject.SetActive(false);
+        level_selector.gameObject.SetActive(false);
             
-            GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
+        GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
             
             StartWave();
         }
@@ -262,12 +262,12 @@ public class EnemySpawner : MonoBehaviour
         int hp = spawnConfig.hp != null ? 
             RPNEvaluator.Evaluate(spawnConfig.hp, variables) : 
             enemyData.hp;
-        
+            
         variables["base"] = enemyData.speed;
         int speed = spawnConfig.speed != null ? 
             RPNEvaluator.Evaluate(spawnConfig.speed, variables) : 
             enemyData.speed;
-        
+            
         variables["base"] = enemyData.damage;
         int damage = spawnConfig.damage != null ? 
             RPNEvaluator.Evaluate(spawnConfig.damage, variables) : 
@@ -276,7 +276,7 @@ public class EnemySpawner : MonoBehaviour
         float delay = spawnConfig.delay != null ? 
             RPNEvaluator.Evaluate(spawnConfig.delay, variables) : 
             2;
-        
+            
         List<int> sequence = spawnConfig.GetSequence();
         
         int enemiesLeft = count;
@@ -334,7 +334,7 @@ public class EnemySpawner : MonoBehaviour
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
-        
+
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(spriteIndex);
         
         if (enemyType == "necromancer")
