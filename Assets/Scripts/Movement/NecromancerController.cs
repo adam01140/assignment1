@@ -2,7 +2,20 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// Special controller for Necromancer enemies with unique behaviors
+/**
+ * NecromancerController - Specialized enemy that can summon minions during gameplay
+ * 
+ * Purpose:
+ * - Creates a special enemy type that can summon minions during combat
+ * - Extends the base EnemyController with unique necromancer behaviors
+ * - Handles visual effects for the necromancer and its summoning abilities
+ * 
+ * Key Features:
+ * - Periodically summons minion enemies to help fight the player
+ * - Applies visual effects like tinting and size changes to differentiate from regular enemies
+ * - When killed, also destroys all of its summoned minions
+ * - Customizable properties like summon cooldown, minion types, and maximum minion count
+ */
 public class NecromancerController : EnemyController
 {
     [Header("Necromancer Specific")]
@@ -14,34 +27,37 @@ public class NecromancerController : EnemyController
     private SpriteRenderer spriteRenderer;
     private int currentMinions = 0;
     
-    public GameObject skeleton;
-    public GameObject minionPrefab;
-    public Transform summonSpot;
+    public GameObject skeleton;         // Default minion prefab if none specified
+    public GameObject minionPrefab;     // Custom minion prefab to spawn
+    public Transform summonSpot;        // Location where minions are summoned
 
-    public float minSummonCooldown = 8f;
-    public float maxSummonCooldown = 12f;
+    public float minSummonCooldown = 8f;  // Minimum time between summons
+    public float maxSummonCooldown = 12f; // Maximum time between summons
 
-    private float nextSummonTime;
-    private List<GameObject> activeMinions = new List<GameObject>();
+    private float nextSummonTime;       // Time when next summon is allowed
+    private List<GameObject> activeMinions = new List<GameObject>(); // List of currently active minions
 
     // Visual effects
-    public GameObject summoning;
-    public GameObject deathParticles;
-    public List<Sprite> necromancerSprites;
+    public GameObject summoning;        // Visual effect for the summoning process
+    public GameObject deathParticles;   // Visual effect when necromancer dies
+    public List<Sprite> necromancerSprites; // Different sprite variations for visual diversity
     
     // Reference to the enemy spawner (since it's not a singleton)
     private EnemySpawner enemySpawner;
     
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    /**
+     * Start - Initializes the necromancer and sets up its visual effects
+     * Called once before the first frame update
+     */
     protected override void Start()
     {
-        // Call base class Start method
+        // Call base class Start method to set up common enemy behaviors
         base.Start();
         
         // Find the EnemySpawner in the scene
         enemySpawner = GameObject.FindObjectOfType<EnemySpawner>();
         
-        // Apply visual effects
+        // Apply visual effects to distinguish this as a necromancer
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -55,7 +71,7 @@ public class NecromancerController : EnemyController
         // Start with a random summon time offset so not all necromancers summon at once
         lastSummonTime = Time.time - Random.Range(0f, summonCooldown * 0.5f);
 
-        // Set a random sprite if available
+        // Set a random sprite if available for visual variety
         if (spriteRenderer != null && necromancerSprites != null && necromancerSprites.Count > 0)
         {
             int randomIndex = Random.Range(0, necromancerSprites.Count);
@@ -66,12 +82,19 @@ public class NecromancerController : EnemyController
         SetNextSummonTime();
     }
     
+    /**
+     * SetNextSummonTime - Sets a random time for the next summon operation
+     * Helps create variation in summon timing for more organic gameplay
+     */
     private void SetNextSummonTime()
     {
         nextSummonTime = Time.time + Random.Range(minSummonCooldown, maxSummonCooldown);
     }
     
-    // Update is called once per frame
+    /**
+     * Update - Main update loop for the necromancer
+     * Checks if it's time to summon a new minion
+     */
     protected override void Update()
     {
         // Handle basic enemy behavior from base class
@@ -80,17 +103,21 @@ public class NecromancerController : EnemyController
         // Don't do anything if we're dead
         if (dead) return;
 
-        // Check if it's time to summon
+        // Check if it's time to summon and we haven't reached max minions
         if (Time.time >= nextSummonTime && activeMinions.Count < maxMinions)
         {
             StartCoroutine(SummonMinion());
             SetNextSummonTime();
         }
 
-        // Clean up the active minions list
+        // Clean up the active minions list to remove any null references
         CleanupMinionsList();
     }
     
+    /**
+     * CleanupMinionsList - Removes null references from the active minions list
+     * Called periodically to keep the list accurate when minions are destroyed
+     */
     private void CleanupMinionsList()
     {
         // Remove any null references (destroyed minions)
@@ -103,7 +130,10 @@ public class NecromancerController : EnemyController
         }
     }
     
-    // Coroutine for summoning a minion with visual effects
+    /**
+     * SummonMinion - Coroutine that handles the summoning of a new minion
+     * Creates visual effects and spawns the actual minion after a delay
+     */
     private IEnumerator SummonMinion()
     {
         if (summonSpot == null)
@@ -167,6 +197,12 @@ public class NecromancerController : EnemyController
         }
     }
     
+    /**
+     * ConfigureMinion - Applies special properties to newly summoned minions
+     * Makes minions weaker than regular enemies for game balance
+     * 
+     * @param minion - The newly created minion GameObject
+     */
     private void ConfigureMinion(GameObject minion)
     {
         // You can add special properties to the summoned minions here
@@ -190,13 +226,19 @@ public class NecromancerController : EnemyController
         // e.g., change color, add a particle effect, etc.
     }
     
-    // Called by minions when they die
+    /**
+     * MinionDied - Called by minions when they die
+     * Decrements the current minion count
+     */
     public void MinionDied()
     {
         currentMinions = Mathf.Max(0, currentMinions - 1);
     }
     
-    // Override the Die method to handle minion cleanup
+    /**
+     * Die - Overrides the base Die method to handle minion cleanup
+     * Destroys all active minions when the necromancer dies
+     */
     protected override void Die()
     {
         if (!dead)
@@ -231,7 +273,10 @@ public class NecromancerController : EnemyController
         }
     }
     
-    // Create a death effect when the necromancer is defeated
+    /**
+     * SpawnDeathEffect - Creates a visual particle effect when the necromancer dies
+     * Creates small particles that spread outward from the death location
+     */
     private void SpawnDeathEffect()
     {
         // Create a simple particle effect for now
