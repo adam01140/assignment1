@@ -2,26 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
 
-/**
- * LevelLoadingTest - Tests the level loading system to ensure it functions correctly
- * 
- * Purpose:
- * - Validates that the game can properly load level data from JSON files
- * - Checks that all expected levels (Easy, Medium, Endless) are loaded
- * - Verifies the structure and content of each level
- * 
- * Key Features:
- * - Runs a series of automated tests on the level loading system
- * - Validates level counts, wave counts, and spawn configurations
- * - Checks for the presence of all expected enemy types in spawn configurations
- * - Reports detailed results to the console for debugging
- */
 public class LevelLoadingTest : MonoBehaviour
 {
-    /**
-     * Start - Called when the component starts
-     * Performs a series of automated tests on the level loading system
-     */
     void Start()
     {
         Debug.Log("=============== LEVEL LOADING TEST ===============");
@@ -33,10 +15,7 @@ public class LevelLoadingTest : MonoBehaviour
         {
             Debug.Log($"Successfully loaded {levels.Count} levels from levels.json");
             
-            /**
-             * Test 1: Check that all expected levels were loaded
-             * Validates that Easy, Medium, and Endless levels exist
-             */
+            // Test 1: Check all levels were loaded
             Debug.Log("Test 1: Verifying all levels were loaded...");
             bool foundEasy = false;
             bool foundMedium = false;
@@ -64,10 +43,7 @@ public class LevelLoadingTest : MonoBehaviour
                 Debug.LogError("❌ Test 1 FAILED: Not all expected levels were found");
             }
             
-            /**
-             * Test 2: Check level details for accuracy
-             * Validates wave count and spawn count for the Easy level
-             */
+            // Test 2: Check level details for accuracy
             Debug.Log("\nTest 2: Verifying level details...");
             
             Level easy = LevelData.Instance.GetLevel("Easy");
@@ -87,10 +63,7 @@ public class LevelLoadingTest : MonoBehaviour
                 }
             }
             
-            /**
-             * Test 3: Check spawn details for accuracy
-             * Validates that all expected enemy types exist in the Easy level
-             */
+            // Test 3: Check spawn details for accuracy
             Debug.Log("\nTest 3: Verifying spawn details...");
             
             if (easy != null && easy.spawns.Count >= 3)

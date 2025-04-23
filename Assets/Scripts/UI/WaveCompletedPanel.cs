@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,21 +5,6 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 
-/**
- * WaveCompletedPanel - Handles the UI panel that appears between waves or at the end of the game
- * 
- * Purpose:
- * - Displays a panel to the player after each wave is completed
- * - Shows statistics about the completed wave (time, enemies defeated, damage received)
- * - Provides a continue button to proceed to the next wave
- * - Can also function as a game over panel when the game is complete
- * 
- * Key Features:
- * - Automatically finds and initializes UI elements if not assigned in the inspector
- * - Can be created dynamically at runtime if not present in the scene
- * - Customizable display options for different stats
- * - Handles both "continue to next wave" and "game over" scenarios
- */
 public class WaveCompletedPanel : MonoBehaviour
 {
     [Header("Panel References")]
@@ -47,30 +31,33 @@ public class WaveCompletedPanel : MonoBehaviour
     private int currentWaveNumber;
     private int totalWaveCount;
     
-    /**
-     * Awake - Called when the script instance is being loaded
-     * Sets up the panel and its components, finding them in the hierarchy if not assigned
-     */
     private void Awake()
     {
-        // Initialize the UI panel
-        // If the panel is not assigned, try to find it
-        if (panel == null)
+        // Make sure panel is hidden at start
+        if (panel != null)
+        {
+            panel.SetActive(false);
+        }
+        else
         {
             Debug.LogWarning("WaveCompletedPanel: panel reference is missing. Try to find it by name.");
-            
-            // First try to find panel by name in children
+            // Try to find the panel by name
             Transform panelTransform = transform.Find("Panel");
             if (panelTransform != null)
             {
                 panel = panelTransform.gameObject;
+                panel.SetActive(false);
                 Debug.Log("WaveCompletedPanel: Found panel by name.");
             }
         }
         
-        // Set up continue button click event
+        // Find UI components if they aren't set
+        FindMissingReferences();
+        
+        // Set up continue button
         if (continueButton != null)
         {
+            // Make sure the OnButtonClicked method is connected to the button click event
             continueButton.onClick.RemoveAllListeners(); // Remove any existing listeners first
             continueButton.onClick.AddListener(OnButtonClicked);
             Debug.Log("WaveCompletedPanel: Button click listener added to continueButton");
@@ -89,7 +76,7 @@ public class WaveCompletedPanel : MonoBehaviour
             Debug.LogError("WaveCompletedPanel: ContinueButton reference is missing! This will cause errors when displaying the panel.");
         }
 
-        // Find the button text if not assigned
+        // Cache button text component
         if (buttonText == null && continueButton != null)
         {
             buttonText = continueButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -98,48 +85,54 @@ public class WaveCompletedPanel : MonoBehaviour
                 Debug.Log("WaveCompletedPanel: Found buttonText in ContinueButton children");
             }
         }
-        
-        // If the panel is still null, use this GameObject
+    }
+    
+    private void FindMissingReferences()
+    {
+        // Find the panel if it's not assigned
         if (panel == null)
         {
-            panel = gameObject;
-            Debug.LogWarning("WaveCompletedPanel: Using first child as panel since no 'Panel' was found.");
-        }
-        
-        // Try to find remaining references if not set
-        if (waveInfoText == null)
-        {
-            waveInfoText = transform.Find("HeaderText")?.GetComponent<TextMeshProUGUI>();
-            if (waveInfoText != null) Debug.Log("WaveCompletedPanel: Found waveInfoText by name.");
-        }
-        
-        if (statsText == null)
-        {
-            statsText = transform.Find("StatsText")?.GetComponent<TextMeshProUGUI>();
-            if (statsText != null) Debug.Log("WaveCompletedPanel: Found statsText by name.");
-        }
-        
-        if (continueButton == null)
-        {
-            continueButton = transform.Find("ContinueButton")?.GetComponent<Button>();
-            if (continueButton != null)
+            panel = transform.Find("Panel")?.gameObject;
+            if (panel == null && transform.childCount > 0)
             {
-                Debug.Log("WaveCompletedPanel: Found continueButton by name.");
-                continueButton.onClick.AddListener(OnButtonClicked);
+                // Use the first child as a fallback
+                panel = transform.GetChild(0).gameObject;
+                Debug.LogWarning("WaveCompletedPanel: Using first child as panel since no 'Panel' was found.");
             }
         }
         
-        // Initially hide the panel
+        // If we found the panel, use it to find other references
         if (panel != null)
         {
-            panel.SetActive(false);
+            if (waveInfoText == null)
+            {
+                waveInfoText = panel.transform.Find("HeaderText")?.GetComponent<TextMeshProUGUI>();
+                if (waveInfoText != null) Debug.Log("WaveCompletedPanel: Found waveInfoText by name.");
+            }
+            
+            if (statsText == null)
+            {
+                statsText = panel.transform.Find("StatsText")?.GetComponent<TextMeshProUGUI>();
+                if (statsText != null) Debug.Log("WaveCompletedPanel: Found statsText by name.");
+            }
+            
+            if (continueButton == null)
+            {
+                continueButton = panel.transform.Find("ContinueButton")?.GetComponent<Button>();
+                if (continueButton != null) 
+                {
+                    Debug.Log("WaveCompletedPanel: Found continueButton by name.");
+                    
+                    // Also try to find the button text
+                    if (buttonText == null)
+                    {
+                        buttonText = continueButton.GetComponentInChildren<TextMeshProUGUI>();
+                    }
+                }
+            }
         }
     }
     
-    /**
-     * Initialize - Sets up the EnemySpawner reference
-     * Must be called before using the panel
-     */
     public void Initialize(EnemySpawner spawnerReference)
     {
         spawner = spawnerReference;
@@ -151,13 +144,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
 
-    /**
-     * ShowGameOverPanel - Special version of ShowPanel for when the game is completed
-     * 
-     * @param currentWave - The final wave that was completed
-     * @param totalWaves - Total number of waves in the level
-     * @param stats - Statistics about the final wave/game
-     */
     public void ShowGameOverPanel(int currentWave, int totalWaves, WaveStatistics stats)
     {
         currentWaveNumber = currentWave;
@@ -174,13 +160,6 @@ public class WaveCompletedPanel : MonoBehaviour
         ShowPanel();
     }
 
-    /**
-     * ShowVictoryPanel - Special version of ShowPanel for when the game is completed
-     * 
-     * @param currentWave - The final wave that was completed
-     * @param totalWaves - Total number of waves in the level
-     * @param stats - Statistics about the final wave/game
-     */
     public void ShowVictoryPanel(int currentWave, int totalWaves, WaveStatistics stats)
     {
         currentWaveNumber = currentWave;
@@ -197,13 +176,6 @@ public class WaveCompletedPanel : MonoBehaviour
         ShowPanel();
     }
     
-    /**
-     * ShowPanel - Displays the panel with information about the completed wave
-     * 
-     * @param currentWave - The wave that was just completed
-     * @param totalWaves - Total number of waves in the level
-     * @param stats - Statistics about the completed wave
-     */
     public void ShowPanel(int currentWave, int totalWaves, WaveStatistics stats)
     {
         currentWaveNumber = currentWave;
@@ -236,11 +208,6 @@ public class WaveCompletedPanel : MonoBehaviour
         ShowPanel();
     }
 
-    /**
-     * UpdateStatsText - Formats and displays the statistics text based on enabled options
-     * 
-     * @param stats - Statistics about the completed wave
-     */
     private void UpdateStatsText(WaveStatistics stats)
     {
         if (statsText != null)
@@ -278,11 +245,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
 
-    /**
-     * UpdateButtonText - Updates the text of the continue button
-     * 
-     * @param text - New text for the button
-     */
     private void UpdateButtonText(string text)
     {
         if (buttonText != null)
@@ -301,9 +263,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
     
-    /**
-     * ShowPanel - Displays the panel from view
-     */
     private void ShowPanel()
     {
         if (panel != null)
@@ -316,9 +275,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
     
-    /**
-     * HidePanel - Hides the panel from view
-     */
     public void HidePanel()
     {
         if (panel != null)
@@ -327,10 +283,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
     
-    /**
-     * OnButtonClicked - Handler for continue button clicks
-     * Either proceeds to next wave or returns to menu depending on isGameOver state
-     */
     private void OnButtonClicked()
     {
         Debug.Log("WaveCompletedPanel: OnButtonClicked called, isGameOver: " + isGameOver);
@@ -379,10 +331,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
     
-    /**
-     * DirectLoadMainScene - Fallback method to directly load the main scene
-     * Used when SceneLoader is not available
-     */
     private void DirectLoadMainScene()
     {
         Debug.Log("WaveCompletedPanel: DirectLoadMainScene called - Loading Main scene directly");
@@ -413,12 +361,6 @@ public class WaveCompletedPanel : MonoBehaviour
         }
     }
     
-    /**
-     * FormatTime - Helper method to format time in minutes:seconds
-     * 
-     * @param seconds - Time value to format
-     * @return Formatted time string (mm:ss)
-     */
     private string FormatTime(float seconds)
     {
         int minutes = Mathf.FloorToInt(seconds / 60f);
@@ -426,10 +368,6 @@ public class WaveCompletedPanel : MonoBehaviour
         return string.Format("{0:00}:{1:00}", minutes, remainingSeconds);
     }
     
-    /**
-     * ReturnToMainScene - Loads the main menu scene
-     * Used when the game is over and player wants to return to menu
-     */
     public void ReturnToMainScene()
     {
         Debug.Log("WaveCompletedPanel: ReturnToMainScene called");

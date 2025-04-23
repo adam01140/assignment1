@@ -13,7 +13,7 @@ public class EnemySpawner : MonoBehaviour
     public Image level_selector;
     public GameObject button;
     public GameObject enemy;
-    public SpawnPoint[] SpawnPoints;
+    public SpawnPoint[] SpawnPoints;    
     
     [Header("Wave UI")]
     public WaveCompletedPanel waveCompletedPanel;
@@ -218,10 +218,10 @@ public class EnemySpawner : MonoBehaviour
                 totalWaves = int.MaxValue; // Effectively infinite
             }
             
-            level_selector.gameObject.SetActive(false);
+        level_selector.gameObject.SetActive(false);
             
             // Initialize the player
-            GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
+        GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
             
             // Start first wave
             StartWave();
@@ -297,7 +297,7 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log($"Wave {waveNumber} completed!");
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
     }
-    
+
     IEnumerator SpawnEnemiesOfType(Spawn spawnConfig, int waveNumber)
     {
         // Variables for RPN evaluation
@@ -414,7 +414,7 @@ public class EnemySpawner : MonoBehaviour
         
         // Create the enemy instance
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
-        
+
         // Set the sprite
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(spriteIndex);
         
@@ -439,7 +439,7 @@ public class EnemySpawner : MonoBehaviour
         else
         {
             // Configure the standard enemy controller for other enemy types
-            EnemyController en = new_enemy.GetComponent<EnemyController>();
+        EnemyController en = new_enemy.GetComponent<EnemyController>();
             en.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
             en.speed = speed;
             en.damage = damage;
