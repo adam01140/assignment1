@@ -85,7 +85,7 @@ public class EnemyController : MonoBehaviour
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    protected virtual void Start()
     {
         TryInitializeTarget();
         
@@ -145,7 +145,7 @@ public class EnemyController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
         // Don't process during scene transitions or game over
         if (isSceneChanging || 
@@ -238,7 +238,26 @@ public class EnemyController : MonoBehaviour
             }
             
             // First try TryGetPlayer method which has recovery mechanisms
-            GameObject playerObj = GameManager.Instance.TryGetPlayer();
+            GameObject playerObj = null;
+            
+            try
+            {
+                playerObj = GameManager.Instance.TryGetPlayer();
+                
+                // Log more detailed diagnostics if player is null from TryGetPlayer
+                if (playerObj == null)
+                {
+                    Debug.LogWarning($"DoAttack: GameManager.TryGetPlayer returned null. " +
+                                   $"GameManager.player is {(GameManager.Instance.player == null ? "null" : "not null")}, " +
+                                   $"Scene: {SceneManager.GetActiveScene().name}, " +
+                                   $"State: {GameManager.Instance.state}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Exception in DoAttack when calling TryGetPlayer: {e.Message}");
+                return;
+            }
             
             // If TryGetPlayer fails, do a direct search as last resort
             if (playerObj == null)
@@ -248,8 +267,16 @@ public class EnemyController : MonoBehaviour
                 // If we found the player, update the GameManager reference
                 if (playerObj != null)
                 {
-                    GameManager.Instance.player = playerObj;
-                    Debug.Log("EnemyController: Found and restored player reference directly");
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.player = playerObj;
+                        Debug.Log("EnemyController: Found and restored player reference directly");
+                    }
+                    else
+                    {
+                        Debug.LogError("GameManager.Instance became null after TryGetPlayer call");
+                        return;
+                    }
                 }
                 else
                 {
@@ -266,13 +293,21 @@ public class EnemyController : MonoBehaviour
                 }
             }
             
+            // Extra safety check
+            if (playerObj == null)
+            {
+                Debug.LogError("Player object is still null after recovery attempts");
+                return;
+            }
+            
             // Update target to make sure it's the latest player
             target = playerObj.transform;
             
             // Ensure the gameObject is not null
-            if (target.gameObject == null)
+            if (target == null || target.gameObject == null)
             {
                 target = null; // Reset the target so it will be re-acquired
+                Debug.LogWarning("Player transform or gameObject became null after setting target");
                 return;
             }
             
@@ -307,7 +342,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void Die()
+    protected virtual void Die()
     {
         if (!dead)
         {

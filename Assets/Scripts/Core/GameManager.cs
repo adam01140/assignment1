@@ -158,30 +158,40 @@ public class GameManager
         enemySpriteManager = null;
         playerSpriteManager = null;
         relicIconManager = null;
+        
+        // Ensure enemies list is initialized
+        if (enemies == null)
+        {
+            enemies = new List<GameObject>();
+        }
     }
     
     private void ClearEnemies()
     {
-        if (enemies != null)
+        // Initialize list if it's null
+        if (enemies == null)
         {
-            // Remove references to potentially destroyed game objects
-            List<GameObject> enemiesToRemove = new List<GameObject>();
-            
-            foreach (GameObject enemy in enemies)
-            {
-                if (enemy == null)
-                {
-                    enemiesToRemove.Add(enemy);
-                }
-            }
-            
-            foreach (GameObject enemy in enemiesToRemove)
-            {
-                enemies.Remove(enemy);
-            }
-            
-            enemies.Clear();
+            enemies = new List<GameObject>();
+            return;
         }
+        
+        // Remove references to potentially destroyed game objects
+        List<GameObject> enemiesToRemove = new List<GameObject>();
+        
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy == null)
+            {
+                enemiesToRemove.Add(enemy);
+            }
+        }
+        
+        foreach (GameObject enemy in enemiesToRemove)
+        {
+            enemies.Remove(enemy);
+        }
+        
+        enemies.Clear();
     }
 
     public void CleanupState()
@@ -255,7 +265,13 @@ public class GameManager
 
     public void AddEnemy(GameObject enemy)
     {
-        if (enemies != null && enemy != null)
+        // Initialize the list if it doesn't exist
+        if (enemies == null)
+        {
+            enemies = new List<GameObject>();
+        }
+        
+        if (enemy != null)
         {
             enemies.Add(enemy);
         }
@@ -263,7 +279,14 @@ public class GameManager
 
     public void RemoveEnemy(GameObject enemy)
     {
-        if (enemies != null && enemy != null)
+        // Check if enemies list exists
+        if (enemies == null)
+        {
+            enemies = new List<GameObject>();
+            return;
+        }
+        
+        if (enemy != null)
         {
             enemies.Remove(enemy);
         }
@@ -271,7 +294,13 @@ public class GameManager
 
     public GameObject GetClosestEnemy(Vector3 point)
     {
-        if (enemies == null || enemies.Count == 0) return null;
+        // Return null if enemies list doesn't exist or is empty
+        if (enemies == null)
+        {
+            return null;
+        }
+        
+        if (enemies.Count == 0) return null;
         if (enemies.Count == 1) return enemies[0];
         
         // Filter out null enemies
@@ -285,6 +314,7 @@ public class GameManager
 
     private GameManager()
     {
+        // Always initialize the enemies list in the constructor
         enemies = new List<GameObject>();
         ResetState();
     }

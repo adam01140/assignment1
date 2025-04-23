@@ -418,11 +418,32 @@ public class EnemySpawner : MonoBehaviour
         // Set the sprite
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(spriteIndex);
         
-        // Configure the enemy controller
-        EnemyController en = new_enemy.GetComponent<EnemyController>();
-        en.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
-        en.speed = speed;
-        en.damage = damage;
+        // Special handling for necromancer enemies
+        if (enemyType == "necromancer")
+        {
+            // Remove the default EnemyController if it exists
+            EnemyController oldController = new_enemy.GetComponent<EnemyController>();
+            if (oldController != null)
+            {
+                Destroy(oldController);
+            }
+            
+            // Add NecromancerController with the specified stats
+            NecromancerController necroController = new_enemy.AddComponent<NecromancerController>();
+            necroController.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
+            necroController.speed = speed;
+            necroController.damage = damage;
+            
+            Debug.Log($"Spawned necromancer with HP: {hp}, Speed: {speed}, Damage: {damage}");
+        }
+        else
+        {
+            // Configure the standard enemy controller for other enemy types
+            EnemyController en = new_enemy.GetComponent<EnemyController>();
+            en.hp = new Hittable(hp, Hittable.Team.MONSTERS, new_enemy);
+            en.speed = speed;
+            en.damage = damage;
+        }
         
         // Add to the game manager's enemy list
         GameManager.Instance.AddEnemy(new_enemy);

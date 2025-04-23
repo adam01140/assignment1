@@ -66,10 +66,32 @@ public class EnemyManager : MonoBehaviour
         enemyInstance.GetComponent<SpriteRenderer>().sprite = 
             GameManager.Instance.enemySpriteManager.Get(enemyData.sprite);
         
-        EnemyController controller = enemyInstance.GetComponent<EnemyController>();
-        controller.hp = new Hittable(enemyData.hp, Hittable.Team.MONSTERS, enemyInstance);
-        controller.speed = enemyData.speed;
-        controller.damage = enemyData.damage;
+        // Select the appropriate controller based on enemy type
+        if (enemyName == "necromancer")
+        {
+            // Remove the default EnemyController if it exists
+            EnemyController oldController = enemyInstance.GetComponent<EnemyController>();
+            if (oldController != null)
+            {
+                Destroy(oldController);
+            }
+            
+            // Add NecromancerController
+            NecromancerController controller = enemyInstance.AddComponent<NecromancerController>();
+            controller.hp = new Hittable(enemyData.hp, Hittable.Team.MONSTERS, enemyInstance);
+            controller.speed = enemyData.speed;
+            controller.damage = enemyData.damage;
+            
+            Debug.Log($"Created necromancer with HP: {enemyData.hp}, Speed: {enemyData.speed}, Damage: {enemyData.damage}");
+        }
+        else
+        {
+            // Use the regular EnemyController for other enemy types
+            EnemyController controller = enemyInstance.GetComponent<EnemyController>();
+            controller.hp = new Hittable(enemyData.hp, Hittable.Team.MONSTERS, enemyInstance);
+            controller.speed = enemyData.speed;
+            controller.damage = enemyData.damage;
+        }
         
         // Add the enemy to the game manager
         GameManager.Instance.AddEnemy(enemyInstance);

@@ -23,7 +23,17 @@
                 "count": "wave 5 / 1 wave 5 % - *",
                 "hp": "100 25 wave *",
                 "location": "random bone"
-            }       
+            },
+            {
+                "enemy": "necromancer",
+                "count": "wave 10 / 1 wave 10 % - *",
+                "hp": "100",
+                "speed": "4",
+                "damage": "15 wave 2 / +",
+                "delay": "10",
+                "sequence": [1],
+                "location": "random green"
+            }
         ]
    },
    {   
@@ -51,7 +61,17 @@
                 "hp": "75 50 wave *",
                 "damage": "base 10 +",
                 "location": "random bone"
-            }       
+            },
+            {
+                "enemy": "necromancer",
+                "count": "wave 7 / 1 +",
+                "hp": "150 10 wave * +",
+                "speed": "5",
+                "damage": "20 wave +",
+                "delay": "8",
+                "sequence": [1, 1],
+                "location": "random green"
+            }
         ]
    },
    {   
@@ -78,7 +98,17 @@
                 "hp": "75 15 wave *",
                 "damage": "base 5 -",
                 "location": "random bone"
-            }       
+            },
+            {
+                "enemy": "necromancer",
+                "count": "wave 15 / 1 +",
+                "hp": "200 20 wave * +",
+                "speed": "6",
+                "damage": "25 wave 2 * +",
+                "delay": "5",
+                "sequence": [1, 2],
+                "location": "random"
+            }
         ]
    }
 ]

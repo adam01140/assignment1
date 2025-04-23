@@ -49,7 +49,7 @@ public class LevelLoadingTest : MonoBehaviour
             Level easy = LevelData.Instance.GetLevel("Easy");
             if (easy != null)
             {
-                bool easyValid = easy.waves == 10 && easy.spawns.Count == 3;
+                bool easyValid = easy.waves == 10 && easy.spawns.Count == 4;
                 Debug.Log($"Easy level - waves: {easy.waves}, spawn count: {easy.spawns.Count}");
                 Debug.Log($"Easy level validity: {easyValid}");
                 
@@ -74,6 +74,7 @@ public class LevelLoadingTest : MonoBehaviour
                 bool zombieFound = false;
                 bool skeletonFound = false;
                 bool warlockFound = false;
+                bool necromancerFound = false;
                 
                 foreach (Spawn spawn in easy.spawns)
                 {
@@ -87,11 +88,12 @@ public class LevelLoadingTest : MonoBehaviour
                     if (spawn.enemy == "zombie") zombieFound = true;
                     if (spawn.enemy == "skeleton") skeletonFound = true;
                     if (spawn.enemy == "warlock") warlockFound = true;
+                    if (spawn.enemy == "necromancer") necromancerFound = true;
                 }
                 
                 Debug.Log(sb.ToString());
                 
-                bool allEnemiesFound = zombieFound && skeletonFound && warlockFound;
+                bool allEnemiesFound = zombieFound && skeletonFound && warlockFound && necromancerFound;
                 Debug.Log($"All expected spawn enemies found: {allEnemiesFound}");
                 
                 if (allEnemiesFound)

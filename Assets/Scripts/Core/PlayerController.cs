@@ -28,6 +28,9 @@ public class PlayerController : MonoBehaviour
     
     // Flag to track if we've logged the initialization message
     private bool hasLoggedInitialization = false;
+    
+    // Flag to track if we've already initialized HP
+    private bool hasInitializedHP = false;
 
     private void Awake()
     {
@@ -41,6 +44,9 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogError("GameManager.Instance is null in PlayerController.Awake");
         }
+        
+        // Try to initialize HP early if possible
+        TryInitializeHP();
     }
 
     private void OnEnable()
@@ -92,6 +98,12 @@ public class PlayerController : MonoBehaviour
             Debug.LogError("GameManager.Instance is null in PlayerController.Start");
         }
         
+        // Initialize hp if it wasn't done in Awake
+        if (!hasInitializedHP)
+        {
+            TryInitializeHP();
+        }
+        
         // Ensure we have references to required components
         EnsureUIComponents();
         
@@ -116,6 +128,33 @@ public class PlayerController : MonoBehaviour
         {
             GameManager.Instance.player = gameObject;
             Debug.LogWarning("Player reference was null and has been restored in Update");
+        }
+        
+        // Make sure HP is initialized
+        if (hp == null && !hasInitializedHP)
+        {
+            TryInitializeHP();
+        }
+    }
+    
+    // Try to initialize HP if it's null
+    private void TryInitializeHP()
+    {
+        if (hp == null)
+        {
+            hp = new Hittable(100, Hittable.Team.PLAYER, gameObject);
+            hp.OnDeath += Die;
+            hp.OnDamage += OnDamageTaken;
+            hp.team = Hittable.Team.PLAYER;
+            hasInitializedHP = true;
+            
+            // Update UI if available
+            if (healthui != null)
+            {
+                healthui.SetHealth(hp);
+            }
+            
+            Debug.Log("Initialized HP in PlayerController");
         }
     }
 
@@ -292,18 +331,34 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Player reference restored in StartLevel");
         }
         
-        spellcaster = new SpellCaster(125, 8, Hittable.Team.PLAYER);
-        StartCoroutine(spellcaster.ManaRegeneration());
+        // Only initialize components if not already done
+        if (spellcaster == null)
+        {
+            spellcaster = new SpellCaster(125, 8, Hittable.Team.PLAYER);
+            StartCoroutine(spellcaster.ManaRegeneration());
+        }
         
-        hp = new Hittable(100, Hittable.Team.PLAYER, gameObject);
-        hp.OnDeath += Die;
-        hp.OnDamage += OnDamageTaken;
-        hp.team = Hittable.Team.PLAYER;
+        // Only initialize HP if it hasn't been done yet
+        if (!hasInitializedHP)
+        {
+            TryInitializeHP();
+        }
 
         // tell UI elements what to show
-        healthui.SetHealth(hp);
-        manaui.SetSpellCaster(spellcaster);
-        spellui.SetSpell(spellcaster.spell);
+        if (healthui != null)
+        {
+            healthui.SetHealth(hp);
+        }
+        
+        if (manaui != null)
+        {
+            manaui.SetSpellCaster(spellcaster);
+        }
+        
+        if (spellui != null && spellcaster != null)
+        {
+            spellui.SetSpell(spellcaster.spell);
+        }
     }
     
     void OnDamageTaken(Damage damage)

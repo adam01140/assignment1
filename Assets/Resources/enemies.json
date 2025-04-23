@@ -19,6 +19,12 @@
        "hp": 30,
        "speed": 7,
        "damage": 10
+   },
+   {
+       "name": "necromancer",
+       "sprite": 4,
+       "hp": 100,
+       "speed": 4,
+       "damage": 25
    }
- 
 ]
