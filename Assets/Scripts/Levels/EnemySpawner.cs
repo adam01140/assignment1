@@ -33,14 +33,46 @@ public class EnemySpawner : MonoBehaviour
     void Awake()
     {
         // Initialize the wave completed panel
-        if (waveCompletedPanel != null)
-        {
-            waveCompletedPanel.Initialize(this);
-        }
+        InitializeWaveCompletedPanel();
         
         // Set up event listeners for statistics tracking
         EnemyController.OnEnemyDefeated += OnEnemyDefeated;
         PlayerController.OnDamageReceived += OnPlayerDamageReceived;
+    }
+    
+    // Method to initialize or find WaveCompletedPanel
+    public void InitializeWaveCompletedPanel()
+    {
+        // If already set, initialize it
+        if (waveCompletedPanel != null)
+        {
+            waveCompletedPanel.Initialize(this);
+            Debug.Log("Initialized existing WaveCompletedPanel reference");
+            return;
+        }
+        
+        // Try to find one in the scene
+        waveCompletedPanel = FindObjectOfType<WaveCompletedPanel>();
+        if (waveCompletedPanel != null)
+        {
+            waveCompletedPanel.Initialize(this);
+            Debug.Log("Found and initialized WaveCompletedPanel in scene");
+        }
+        else
+        {
+            Debug.LogWarning("WaveCompletedPanel not found in EnemySpawner - will try to connect later if one is created");
+        }
+    }
+    
+    // Public method to set the reference to WaveCompletedPanel
+    public void SetWaveCompletedPanel(WaveCompletedPanel panel)
+    {
+        if (panel != null)
+        {
+            waveCompletedPanel = panel;
+            waveCompletedPanel.Initialize(this);
+            Debug.Log("WaveCompletedPanel reference set in EnemySpawner");
+        }
     }
     
     void OnDestroy()
@@ -75,6 +107,29 @@ public class EnemySpawner : MonoBehaviour
                 }
             }
         }
+    }
+    
+    // Getter methods for wave information
+    public int GetCurrentWave()
+    {
+        return currentWave;
+    }
+    
+    public int GetTotalWaves()
+    {
+        return totalWaves;
+    }
+    
+    public WaveStatistics GetCurrentWaveStats()
+    {
+        // If currentWaveStats is null, create a simple default one
+        if (currentWaveStats == null)
+        {
+            currentWaveStats = WaveStatistics.CreateForWave(currentWave);
+            currentWaveStats.FinalizeStats();
+            Debug.LogWarning("Created default wave statistics since none were available");
+        }
+        return currentWaveStats;
     }
     
     // Event handlers for statistics tracking

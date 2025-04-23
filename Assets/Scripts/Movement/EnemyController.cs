@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class EnemyController : MonoBehaviour
 {
-
     public Transform target;
     public int speed;
     public int damage = 5; // Default damage value
@@ -14,23 +15,79 @@ public class EnemyController : MonoBehaviour
     
     // Add stats tracking
     public static System.Action OnEnemyDefeated;
+    
+    // Static flags for error logging
+    private static bool hasLoggedGameManagerError = false;
+    private static bool hasLoggedPlayerError = false;
+    
+    // Flag to track if scene is changing
+    private bool isSceneChanging = false;
+    
+    // Timer for retry attempts to find player
+    private float retryPlayerFindTimer = 0f;
+    private const float RETRY_PLAYER_FIND_INTERVAL = 1f; // Try every second
+
+    void OnEnable()
+    {
+        // Subscribe to scene loading events
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
+        
+        // Register with GameManager if available
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddEnemy(gameObject);
+        }
+    }
+    
+    void OnDisable()
+    {
+        // Unsubscribe from scene events
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        
+        // Unregister from GameManager if available
+        if (GameManager.Instance != null && !isSceneChanging)
+        {
+            GameManager.Instance.RemoveEnemy(gameObject);
+        }
+    }
+    
+    // Scene event handlers
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        isSceneChanging = false;
+        
+        // Try to find player again after scene load
+        StartCoroutine(FindPlayerAfterDelay(0.5f));
+    }
+    
+    private void OnSceneUnloaded(Scene scene)
+    {
+        isSceneChanging = true;
+    }
+    
+    // Coroutine to find player after a delay
+    private IEnumerator FindPlayerAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Use the new TryGetPlayer method
+        if (target == null && GameManager.Instance != null)
+        {
+            GameObject playerObj = GameManager.Instance.TryGetPlayer();
+            if (playerObj != null)
+            {
+                target = playerObj.transform;
+                Debug.Log("Enemy found player after scene load");
+            }
+        }
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        if (GameManager.Instance == null)
-        {
-            Debug.LogError("GameManager.Instance is null");
-            return;
-        }
-        
-        if (GameManager.Instance.player == null)
-        {
-            Debug.LogError("GameManager.Instance.player is null");
-            return;
-        }
-        
-        target = GameManager.Instance.player.transform;
+        TryInitializeTarget();
         
         if (hp == null)
         {
@@ -49,33 +106,93 @@ public class EnemyController : MonoBehaviour
             healthui.SetHealth(hp);
         }
     }
+    
+    // Try to initialize the target (player)
+    private bool TryInitializeTarget()
+    {
+        // Check if we already have a valid target
+        if (target != null)
+        {
+            return true;
+        }
+        
+        if (GameManager.Instance == null)
+        {
+            if (!hasLoggedGameManagerError)
+            {
+                Debug.LogError("GameManager.Instance is null in EnemyController.TryInitializeTarget");
+                hasLoggedGameManagerError = true;
+            }
+            return false;
+        }
+        
+        // Use the new TryGetPlayer method
+        GameObject playerObj = GameManager.Instance.TryGetPlayer();
+        if (playerObj == null)
+        {
+            if (!hasLoggedPlayerError)
+            {
+                Debug.LogError("Could not find player through GameManager.TryGetPlayer()");
+                hasLoggedPlayerError = true;
+            }
+            return false;
+        }
+        
+        // Set the target to the player
+        target = playerObj.transform;
+        Debug.Log("Enemy successfully initialized target to player");
+        return true;
+    }
 
     // Update is called once per frame
     void Update()
     {
-        try
+        // Don't process during scene transitions or game over
+        if (isSceneChanging || 
+            GameManager.Instance == null || 
+            GameManager.Instance.state == GameManager.GameState.GAMEOVER)
         {
-            if (target == null)
+            return;
+        }
+        
+        // Try to find player if target is null
+        if (target == null)
+        {
+            retryPlayerFindTimer += Time.deltaTime;
+            if (retryPlayerFindTimer >= RETRY_PLAYER_FIND_INTERVAL)
             {
-                // Try to recover the target
-                if (GameManager.Instance != null && GameManager.Instance.player != null)
+                retryPlayerFindTimer = 0f;
+                if (!TryInitializeTarget())
                 {
-                    target = GameManager.Instance.player.transform;
-                    Debug.Log("Enemy recovered target reference");
-                }
-                else
-                {
-                    return; // Cannot proceed without target
+                    return; // Could not find target, skip this frame
                 }
             }
+            else
+            {
+                return; // Wait until retry timer is up
+            }
+        }
+        
+        try
+        {
+            // Double-check target validity
+            if (target == null)
+            {
+                return;
+            }
             
+            // Calculate distance to target
             Vector3 direction = target.position - transform.position;
-            if (direction.magnitude < 2f)
+            float distanceToTarget = direction.magnitude;
+            
+            // Attack if within range
+            if (distanceToTarget < 2f)
             {
                 DoAttack();
             }
             else
             {
+                // Move towards target
                 Unit unit = GetComponent<Unit>();
                 if (unit != null)
                 {
@@ -91,64 +208,104 @@ public class EnemyController : MonoBehaviour
     
     void DoAttack()
     {
+        // Skip attack if scene is changing or game is over
+        if (isSceneChanging || 
+            GameManager.Instance == null || 
+            GameManager.Instance.state == GameManager.GameState.GAMEOVER)
+        {
+            return;
+        }
+        
         try
         {
-            if (last_attack + 2 < Time.time)
+            // Check if enough time has passed for next attack
+            if (last_attack + 2 >= Time.time)
             {
-                last_attack = Time.time;
-                
-                Debug.Log("Enemy attempting to attack");
-                
-                // Comprehensive null checks
-                if (GameManager.Instance == null)
+                return; // Not ready to attack yet
+            }
+            
+            last_attack = Time.time;
+            
+            // Verify GameManager
+            if (GameManager.Instance == null)
+            {
+                if (!hasLoggedGameManagerError)
                 {
                     Debug.LogError("GameManager.Instance is null in DoAttack");
-                    return;
+                    hasLoggedGameManagerError = true;
                 }
+                return;
+            }
+            
+            // First try TryGetPlayer method which has recovery mechanisms
+            GameObject playerObj = GameManager.Instance.TryGetPlayer();
+            
+            // If TryGetPlayer fails, do a direct search as last resort
+            if (playerObj == null)
+            {
+                playerObj = GameObject.FindWithTag("unit");
                 
-                if (GameManager.Instance.player == null)
+                // If we found the player, update the GameManager reference
+                if (playerObj != null)
                 {
-                    Debug.LogError("GameManager.Instance.player is null in DoAttack");
-                    return;
+                    GameManager.Instance.player = playerObj;
+                    Debug.Log("EnemyController: Found and restored player reference directly");
                 }
-                
-                if (target == null)
+                else
                 {
-                    Debug.LogError("target is null in DoAttack");
-                    target = GameManager.Instance.player.transform;
-                    if (target == null) return;
+                    if (!hasLoggedPlayerError)
+                    {
+                        Debug.LogError("Could not find player even with direct search in DoAttack");
+                        hasLoggedPlayerError = true;
+                        return;
+                    }
+                    else
+                    {
+                        return; // Already logged, skip this frame
+                    }
                 }
+            }
+            
+            // Update target to make sure it's the latest player
+            target = playerObj.transform;
+            
+            // Ensure the gameObject is not null
+            if (target.gameObject == null)
+            {
+                target = null; // Reset the target so it will be re-acquired
+                return;
+            }
+            
+            // Get PlayerController reference and verify it's valid
+            PlayerController playerController = target.gameObject.GetComponent<PlayerController>();
+            if (playerController == null)
+            {
+                Debug.LogWarning("PlayerController component not found on target");
+                return;
+            }
+            
+            // Check HP component - if null, try to initialize it
+            if (playerController.hp == null)
+            {
+                // Check if the player has already called StartLevel
+                playerController.StartLevel();
                 
-                if (target.gameObject == null)
-                {
-                    Debug.LogError("target.gameObject is null in DoAttack");
-                    return;
-                }
-                
-                PlayerController playerController = target.gameObject.GetComponent<PlayerController>();
-                if (playerController == null)
-                {
-                    Debug.LogError("playerController is null in DoAttack");
-                    return;
-                }
-                
+                // Check again if HP is still null
                 if (playerController.hp == null)
                 {
-                    Debug.LogError("playerController.hp is null in DoAttack");
+                    Debug.LogWarning("PlayerController.hp is null, cannot deal damage. Attempted to initialize it without success.");
                     return;
                 }
-                
-                // Now that we've verified everything, deal damage
-                playerController.hp.Damage(new Damage(damage, Damage.Type.PHYSICAL));
-                Debug.Log("Enemy attack successful");
             }
+            
+            // Deal damage
+            playerController.hp.Damage(new Damage(damage, Damage.Type.PHYSICAL));
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Exception in DoAttack: {e.Message}\n{e.StackTrace}");
         }
     }
-
 
     void Die()
     {
@@ -159,7 +316,12 @@ public class EnemyController : MonoBehaviour
             // Call the global event for enemy defeat
             OnEnemyDefeated?.Invoke();
             
-            GameManager.Instance.RemoveEnemy(gameObject);
+            // Remove from GameManager's enemy list
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RemoveEnemy(gameObject);
+            }
+            
             Destroy(gameObject);
         }
     }
